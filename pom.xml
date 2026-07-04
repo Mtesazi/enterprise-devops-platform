@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -8,20 +10,66 @@
     <groupId>com.mtesazi</groupId>
     <artifactId>enterprise-devops-platform</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+
     <packaging>pom</packaging>
 
     <name>Enterprise DevOps Platform</name>
 
-    <modules>
-        <module>services/employee-service</module>
-    </modules>
-
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.5.6</spring.boot.version>
+        <springdoc.version>2.8.13</springdoc.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+
+            <plugins>
+
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+
+        </pluginManagement>
+    </build>
+
+    <modules>
+        <module>platform-starter</module>
+        <module>services/employee-service</module>
+        <module>services/auth-service</module>
+        <module>services/department-service</module>
+        <module>services/payroll-service</module>
+        <module>services/notification-service</module>
+        <module>services/audit-service</module>
+        <module>services/gateway-service</module>
+        <module>services/shared-library</module>
+    </modules>
 </project>
