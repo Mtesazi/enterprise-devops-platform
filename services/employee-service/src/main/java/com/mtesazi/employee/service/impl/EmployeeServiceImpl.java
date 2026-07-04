@@ -66,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private Employee findEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee " + id + " not found"));
     }
 
     private EmployeeResponse toResponse(Employee employee) {
