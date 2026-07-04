@@ -4,6 +4,7 @@ import com.mtesazi.employee.dto.EmployeeRequest;
 import com.mtesazi.employee.dto.EmployeeResponse;
 import com.mtesazi.employee.entity.Employee;
 import com.mtesazi.employee.exception.EmployeeNotFoundException;
+import com.mtesazi.employee.mapper.EmployeeMapper;
 import com.mtesazi.employee.repository.EmployeeRepository;
 import com.mtesazi.employee.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
@@ -18,17 +19,13 @@ import java.util.List;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeMapper employeeMapper;
 
     @Override
     public EmployeeResponse createEmployee(EmployeeRequest request) {
-        Employee employee = new Employee();
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setEmail(request.getEmail());
-        employee.setDepartment(request.getDepartment());
-        employee.setSalary(request.getSalary());
+        Employee employee = employeeMapper.toEntity(request);
         Employee savedEmployee = employeeRepository.save(employee);
-        return toResponse(savedEmployee);
+        return employeeMapper.toResponse(savedEmployee);
     }
 
     @Override
@@ -36,26 +33,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<EmployeeResponse> getAllEmployees() {
         return employeeRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(employeeMapper::toResponse)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public EmployeeResponse getEmployeeById(Long id) {
-        return toResponse(findEmployeeOrThrow(id));
+        return employeeMapper.toResponse(findEmployeeOrThrow(id));
     }
 
     @Override
     public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setEmail(request.getEmail());
-        employee.setDepartment(request.getDepartment());
-        employee.setSalary(request.getSalary());
+        employeeMapper.applyRequestToEntity(request, employee);
         Employee updatedEmployee = employeeRepository.save(employee);
-        return toResponse(updatedEmployee);
+        return employeeMapper.toResponse(updatedEmployee);
     }
 
     @Override
@@ -67,18 +60,5 @@ public class EmployeeServiceImpl implements EmployeeService {
     private Employee findEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee " + id + " not found"));
-    }
-
-    private EmployeeResponse toResponse(Employee employee) {
-        EmployeeResponse response = new EmployeeResponse();
-        response.setId(employee.getId());
-        response.setFirstName(employee.getFirstName());
-        response.setLastName(employee.getLastName());
-        response.setEmail(employee.getEmail());
-        response.setDepartment(employee.getDepartment());
-        response.setSalary(employee.getSalary());
-        response.setCreatedAt(employee.getCreatedAt());
-        response.setUpdatedAt(employee.getUpdatedAt());
-        return response;
     }
 }
