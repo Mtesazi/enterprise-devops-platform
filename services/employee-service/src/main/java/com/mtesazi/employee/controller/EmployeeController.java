@@ -1,8 +1,15 @@
 package com.mtesazi.employee.controller;
 
+import com.mtesazi.employee.dto.DeleteEmployeeResponse;
 import com.mtesazi.employee.dto.EmployeeRequest;
 import com.mtesazi.employee.dto.EmployeeResponse;
 import com.mtesazi.employee.service.EmployeeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,20 +38,33 @@ public class EmployeeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeResponse> getEmployeeById(
-            @PathVariable Long id) {
+            @Parameter(description = "Employee ID", example = "1")
+            @PathVariable("id") Long id) {
         return ResponseEntity.ok(employeeService.getEmployeeById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeResponse> updateEmployee(
-            @PathVariable Long id,
+            @Parameter(description = "Employee ID", example = "1")
+            @PathVariable("id") Long id,
             @Valid @RequestBody EmployeeRequest request) {
         return ResponseEntity.ok(employeeService.updateEmployee(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
+    @Operation(summary = "Delete employee by ID")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Employee deleted successfully",
+                    content = @Content(schema = @Schema(implementation = DeleteEmployeeResponse.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Employee not found", content = @Content)
+    })
+    public ResponseEntity<DeleteEmployeeResponse> deleteEmployee(
+            @Parameter(description = "Employee ID", example = "1")
+            @PathVariable("id") Long id) {
         employeeService.deleteEmployee(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new DeleteEmployeeResponse(id, "Employee with id:"   + id + " is deleted successfully"));
     }
 }
