@@ -8,11 +8,11 @@ CREATE TABLE employees
 
     email VARCHAR(150) UNIQUE NOT NULL,
 
-    department VARCHAR(100) NOT NULL,
+    department VARCHAR(100),
 
-    salary NUMERIC(12,2) NOT NULL,
+    salary NUMERIC(12,2),
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
 
     updated_at TIMESTAMP
 );
