@@ -1,0 +1,3 @@
+ALTER TABLE employees
+    ALTER COLUMN department DROP NOT NULL,
+    ALTER COLUMN salary DROP NOT NULL;

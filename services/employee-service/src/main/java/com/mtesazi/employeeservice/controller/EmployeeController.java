@@ -65,6 +65,6 @@ public class EmployeeController {
             @Parameter(description = "Employee ID", example = "1")
             @PathVariable("id") Long id) {
         employeeService.deleteEmployee(id);
-        return ResponseEntity.ok(new DeleteEmployeeResponse(id, "Employee with id:"   + id + " is deleted successfully"));
+        return ResponseEntity.ok(new DeleteEmployeeResponse(id, "Employee with id " + id + " is deleted successfully"));
     }
 }
