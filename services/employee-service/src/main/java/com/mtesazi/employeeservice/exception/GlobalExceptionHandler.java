@@ -23,6 +23,27 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI(), Map.of());
     }
 
+    @ExceptionHandler(DepartmentReferenceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDepartmentReferenceNotFound(
+            DepartmentReferenceNotFoundException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(DepartmentServiceTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handleDepartmentServiceTimeout(
+            DepartmentServiceTimeoutException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.GATEWAY_TIMEOUT, ex.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(DepartmentServiceCommunicationException.class)
+    public ResponseEntity<ErrorResponse> handleDepartmentServiceCommunication(
+            DepartmentServiceCommunicationException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request.getRequestURI(), Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(MethodArgumentNotValidException ex) {

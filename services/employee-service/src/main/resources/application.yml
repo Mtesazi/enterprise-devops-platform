@@ -32,3 +32,9 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+services:
+  department:
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://localhost:8082}
+    connect-timeout: 2s
+    read-timeout: 3s

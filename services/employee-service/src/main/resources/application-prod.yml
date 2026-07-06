@@ -12,3 +12,9 @@ logging:
   level:
     com.mtesazi: INFO
     org.springframework: WARN
+
+services:
+  department:
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://department-service:8082}
+    connect-timeout: 2s
+    read-timeout: 3s

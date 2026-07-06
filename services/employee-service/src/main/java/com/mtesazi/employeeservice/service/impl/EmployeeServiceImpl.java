@@ -4,6 +4,7 @@ import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
 import com.mtesazi.employeeservice.entity.Employee;
 import com.mtesazi.employeeservice.exception.EmployeeNotFoundException;
+import com.mtesazi.employeeservice.integration.DepartmentServiceClient;
 import com.mtesazi.employeeservice.mapper.EmployeeMapper;
 import com.mtesazi.employeeservice.repository.EmployeeRepository;
 import com.mtesazi.employeeservice.service.EmployeeService;
@@ -20,9 +21,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
+    private final DepartmentServiceClient departmentServiceClient;
 
     @Override
     public EmployeeResponse createEmployee(EmployeeRequest request) {
+        departmentServiceClient.validateDepartmentExists(request.getDepartment());
         Employee employee = employeeMapper.toEntity(request);
         Employee savedEmployee = employeeRepository.save(employee);
         return employeeMapper.toResponse(savedEmployee);
@@ -45,6 +48,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
+        departmentServiceClient.validateDepartmentExists(request.getDepartment());
         Employee employee = findEmployeeOrThrow(id);
         employeeMapper.applyRequestToEntity(request, employee);
         Employee updatedEmployee = employeeRepository.save(employee);
