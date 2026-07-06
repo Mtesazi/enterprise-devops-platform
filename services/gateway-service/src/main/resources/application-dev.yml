@@ -1,0 +1,14 @@
+logging:
+  level:
+    com.mtesazi: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+services:
+  employee:
+    base-url: ${EMPLOYEE_SERVICE_BASE_URL:http://localhost:8081}
+  department:
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://localhost:8082}
+
+security:
+  auth:
+    enabled: false

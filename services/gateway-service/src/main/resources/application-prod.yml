@@ -1,0 +1,14 @@
+logging:
+  level:
+    com.mtesazi: INFO
+    org.springframework: WARN
+
+services:
+  employee:
+    base-url: ${EMPLOYEE_SERVICE_BASE_URL:http://employee-service:8081}
+  department:
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://department-service:8082}
+
+security:
+  auth:
+    enabled: ${GATEWAY_AUTH_ENABLED:true}
