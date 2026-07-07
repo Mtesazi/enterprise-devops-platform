@@ -17,3 +17,4 @@ eureka:
 security:
   auth:
     enabled: ${GATEWAY_AUTH_ENABLED:true}
+    jwt-secret: ${GATEWAY_JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}

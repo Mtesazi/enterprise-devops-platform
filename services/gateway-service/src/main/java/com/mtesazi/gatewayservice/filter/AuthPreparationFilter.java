@@ -1,6 +1,8 @@
 package com.mtesazi.gatewayservice.filter;
 
 import com.mtesazi.gatewayservice.config.GatewayAuthProperties;
+import com.mtesazi.gatewayservice.security.JwtTokenValidator;
+import io.jsonwebtoken.JwtException;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -22,9 +24,11 @@ public class AuthPreparationFilter implements GlobalFilter, Ordered {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final GatewayAuthProperties authProperties;
+    private final JwtTokenValidator jwtTokenValidator;
 
-    public AuthPreparationFilter(GatewayAuthProperties authProperties) {
+    public AuthPreparationFilter(GatewayAuthProperties authProperties, JwtTokenValidator jwtTokenValidator) {
         this.authProperties = authProperties;
+        this.jwtTokenValidator = jwtTokenValidator;
     }
 
     @Override
@@ -36,7 +40,16 @@ public class AuthPreparationFilter implements GlobalFilter, Ordered {
         String authorizationHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)
                 || authorizationHeader.substring(BEARER_PREFIX.length()).isBlank()) {
-            return unauthorized(exchange);
+            return unauthorized(exchange, "Missing or invalid Authorization header");
+        }
+
+        String token = authorizationHeader.substring(BEARER_PREFIX.length());
+        try {
+            if (!jwtTokenValidator.isValidAccessToken(token)) {
+                return unauthorized(exchange, "Invalid or expired token");
+            }
+        } catch (JwtException | IllegalArgumentException ex) {
+            return unauthorized(exchange, "Invalid or expired token");
         }
 
         return chain.filter(exchange);
@@ -57,10 +70,10 @@ public class AuthPreparationFilter implements GlobalFilter, Ordered {
         return false;
     }
 
-    private Mono<Void> unauthorized(ServerWebExchange exchange) {
+    private Mono<Void> unauthorized(ServerWebExchange exchange, String message) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] body = "{\"message\":\"Missing or invalid Authorization header\"}"
+        byte[] body = ("{\"message\":\"" + message + "\"}")
                 .getBytes(StandardCharsets.UTF_8);
         return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
                 .bufferFactory()

@@ -11,6 +11,7 @@ import java.util.List;
 public class GatewayAuthProperties {
 
     private boolean enabled;
+    private String jwtSecret;
     private List<String> publicPaths = new ArrayList<>();
 
     public boolean isEnabled() {
@@ -27,5 +28,13 @@ public class GatewayAuthProperties {
 
     public void setPublicPaths(List<String> publicPaths) {
         this.publicPaths = publicPaths;
+    }
+
+    public String getJwtSecret() {
+        return jwtSecret;
+    }
+
+    public void setJwtSecret(String jwtSecret) {
+        this.jwtSecret = jwtSecret;
     }
 }
