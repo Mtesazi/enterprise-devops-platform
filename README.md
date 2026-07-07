@@ -19,7 +19,7 @@ A production-ready Employee Management Platform built using:
 
 ## Architecture
 
-Monolith → Microservices → Kubernetes → AWS
+Monolith → Microservices → Eureka Discovery → Kubernetes → AWS
 
 ## Services
 
@@ -29,6 +29,7 @@ Monolith → Microservices → Kubernetes → AWS
 - Payroll Service
 - Notification Service
 - Audit Service
+- Discovery Server
 - API Gateway
 
 ## Tech Stack

@@ -12,3 +12,8 @@ logging:
   level:
     com.mtesazi: INFO
     org.springframework: WARN
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}

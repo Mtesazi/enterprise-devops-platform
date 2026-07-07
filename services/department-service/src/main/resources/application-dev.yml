@@ -16,3 +16,8 @@ logging:
     com.mtesazi: DEBUG
     org.springframework.web: DEBUG
     org.hibernate: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}

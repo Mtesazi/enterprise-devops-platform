@@ -5,6 +5,9 @@ spring:
     gateway:
       server:
         webflux:
+          discovery:
+            locator:
+              enabled: false
           httpclient:
             connect-timeout: 2000
             response-timeout: 3s
@@ -23,9 +26,16 @@ management:
 
 services:
   employee:
-    base-url: ${EMPLOYEE_SERVICE_BASE_URL:http://localhost:8081}
+    base-url: ${EMPLOYEE_SERVICE_BASE_URL:lb://employee-service}
   department:
-    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://localhost:8082}
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:lb://department-service}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
 
 security:
   auth:

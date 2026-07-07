@@ -30,6 +30,13 @@ management:
     health:
       show-details: always
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
