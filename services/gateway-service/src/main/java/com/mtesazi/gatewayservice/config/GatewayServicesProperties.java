@@ -9,6 +9,7 @@ public class GatewayServicesProperties {
 
     private final ServiceTarget employee = new ServiceTarget();
     private final ServiceTarget department = new ServiceTarget();
+    private final ServiceTarget auth = new ServiceTarget();
 
     public ServiceTarget getEmployee() {
         return employee;
@@ -16,6 +17,10 @@ public class GatewayServicesProperties {
 
     public ServiceTarget getDepartment() {
         return department;
+    }
+
+    public ServiceTarget getAuth() {
+        return auth;
     }
 
     public static class ServiceTarget {
