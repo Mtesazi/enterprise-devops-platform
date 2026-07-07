@@ -39,6 +39,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(request));
     }
 
+
     @GetMapping("/me")
     public ResponseEntity<UserMeResponse> me(Authentication authentication) {
         return ResponseEntity.ok(authService.me(authentication.getName()));
