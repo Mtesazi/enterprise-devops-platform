@@ -2,7 +2,6 @@ package com.mtesazi.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.util.List;
 
 @Data
