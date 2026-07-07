@@ -19,6 +19,11 @@ logging:
 
 services:
   department:
-    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://localhost:8082}
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://department-service}
     connect-timeout: 2s
     read-timeout: 3s
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}

@@ -5,9 +5,14 @@ logging:
 
 services:
   employee:
-    base-url: ${EMPLOYEE_SERVICE_BASE_URL:http://employee-service:8081}
+    base-url: ${EMPLOYEE_SERVICE_BASE_URL:lb://employee-service}
   department:
-    base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://department-service:8082}
+    base-url: ${DEPARTMENT_SERVICE_BASE_URL:lb://department-service}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}
 
 security:
   auth:
