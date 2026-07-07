@@ -4,6 +4,8 @@ logging:
     org.springframework.cloud.gateway: DEBUG
 
 services:
+  auth:
+    base-url: ${AUTH_SERVICE_BASE_URL:lb://auth-service}
   employee:
     base-url: ${EMPLOYEE_SERVICE_BASE_URL:lb://employee-service}
   department:
