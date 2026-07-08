@@ -15,6 +15,30 @@ services:
           - postgres
           - enterprise-postgres
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: kafka-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
   config-server:
     build:
       context: .
@@ -67,10 +91,12 @@ services:
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
       DEPARTMENT_SERVICE_BASE_URL: http://department-service
       CONFIG_SERVER_URL: http://config-server:8888
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - postgres
       - config-server
       - discovery-server
+      - kafka
 
   department-service:
     build:
@@ -111,6 +137,46 @@ services:
       - auth-service
       - employee-service
       - department-service
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      CONFIG_SERVER_URL: http://config-server:8888
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - config-server
+      - discovery-server
+      - kafka
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: services/audit-service/Dockerfile
+    container_name: audit-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/audit_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      CONFIG_SERVER_URL: http://config-server:8888
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - config-server
+      - discovery-server
+      - kafka
 
 volumes:
   postgres-data:

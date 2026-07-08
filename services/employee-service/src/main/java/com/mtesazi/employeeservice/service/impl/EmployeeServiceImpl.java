@@ -8,6 +8,8 @@ import com.mtesazi.employeeservice.integration.DepartmentServiceClient;
 import com.mtesazi.employeeservice.mapper.EmployeeMapper;
 import com.mtesazi.employeeservice.repository.EmployeeRepository;
 import com.mtesazi.employeeservice.service.EmployeeService;
+import com.mtesazi.sharedlibrary.kafka.EmployeeCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +24,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final DepartmentServiceClient departmentServiceClient;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public EmployeeResponse createEmployee(EmployeeRequest request) {
         departmentServiceClient.validateDepartmentExists(request.getDepartment());
         Employee employee = employeeMapper.toEntity(request);
         Employee savedEmployee = employeeRepository.save(employee);
+        applicationEventPublisher.publishEvent(new EmployeeCreatedEvent(
+                savedEmployee.getId(),
+                savedEmployee.getFirstName(),
+                savedEmployee.getLastName(),
+                savedEmployee.getEmail(),
+                savedEmployee.getDepartment(),
+                savedEmployee.getSalary(),
+                savedEmployee.getCreatedAt()
+        ));
         return employeeMapper.toResponse(savedEmployee);
     }
 
