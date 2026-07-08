@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: enterprise-postgres
+    hostname: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      default:
+        aliases:
+          - postgres
+          - enterprise-postgres
+
+  discovery-server:
+    build:
+      context: .
+      dockerfile: services/discovery-server/Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      SECURITY_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      SERVER_PORT: 8083
+    depends_on:
+      - postgres
+      - discovery-server
+
+  employee-service:
+    build:
+      context: .
+      dockerfile: services/employee-service/Dockerfile
+    container_name: employee-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/employee_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      DEPARTMENT_SERVICE_BASE_URL: http://department-service
+    depends_on:
+      - postgres
+      - discovery-server
+
+  department-service:
+    build:
+      context: .
+      dockerfile: services/department-service/Dockerfile
+    container_name: department-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/department_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+    depends_on:
+      - postgres
+      - discovery-server
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: services/gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      GATEWAY_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      GATEWAY_AUTH_ENABLED: "true"
+      AUTH_SERVICE_BASE_URL: lb://auth-service
+      EMPLOYEE_SERVICE_BASE_URL: lb://employee-service
+      DEPARTMENT_SERVICE_BASE_URL: lb://department-service
+    depends_on:
+      - discovery-server
+      - auth-service
+      - employee-service
+      - department-service
+
+volumes:
+  postgres-data:
