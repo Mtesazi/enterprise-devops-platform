@@ -1,0 +1,32 @@
+services:
+  auth:
+    base-url: lb://auth-service
+  employee:
+    base-url: lb://employee-service
+  department:
+    base-url: lb://department-service
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+
+security:
+  auth:
+    enabled: true
+    jwt-secret: ${GATEWAY_JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+    public-paths:
+      - /api/auth/login
+      - /api/auth/register
+      - /api/auth/refresh
+      - /login
+      - /register
+      - /actuator/health
+      - /swagger-ui/**
+      - /swagger/**
+      - /v3/api-docs/**
