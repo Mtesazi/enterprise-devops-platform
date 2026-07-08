@@ -1,6 +1,8 @@
 spring:
   application:
     name: employee-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -9,7 +11,7 @@ spring:
       hibernate:
         format_sql: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/employee_db
+    url: jdbc:postgresql://postgres:5432/employee_db
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -42,6 +44,6 @@ services:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}
     register-with-eureka: true
     fetch-registry: true

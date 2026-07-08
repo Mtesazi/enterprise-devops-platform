@@ -15,6 +15,14 @@ services:
           - postgres
           - enterprise-postgres
 
+  config-server:
+    build:
+      context: .
+      dockerfile: services/config-server/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+
   discovery-server:
     build:
       context: .
@@ -22,6 +30,8 @@ services:
     container_name: discovery-server
     ports:
       - "8761:8761"
+    depends_on:
+      - config-server
 
   auth-service:
     build:
@@ -37,8 +47,10 @@ services:
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
       SECURITY_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
       SERVER_PORT: 8083
+      CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
       - postgres
+      - config-server
       - discovery-server
 
   employee-service:
@@ -54,8 +66,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
       DEPARTMENT_SERVICE_BASE_URL: http://department-service
+      CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
       - postgres
+      - config-server
       - discovery-server
 
   department-service:
@@ -70,8 +84,10 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
       - postgres
+      - config-server
       - discovery-server
 
   gateway-service:
@@ -88,7 +104,9 @@ services:
       AUTH_SERVICE_BASE_URL: lb://auth-service
       EMPLOYEE_SERVICE_BASE_URL: lb://employee-service
       DEPARTMENT_SERVICE_BASE_URL: lb://department-service
+      CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
+      - config-server
       - discovery-server
       - auth-service
       - employee-service
