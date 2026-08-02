@@ -1,7 +1,6 @@
 package com.mtesazi.employeeservice.service.impl;
 
 import com.mtesazi.employeeservice.client.DepartmentClient;
-import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
 import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
@@ -9,6 +8,7 @@ import com.mtesazi.employeeservice.entity.Employee;
 import com.mtesazi.employeeservice.exception.EmployeeNotFoundException;
 import com.mtesazi.employeeservice.mapper.EmployeeMapper;
 import com.mtesazi.employeeservice.repository.EmployeeRepository;
+import com.mtesazi.employeeservice.service.DepartmentLookupService;
 import com.mtesazi.employeeservice.service.EmployeeService;
 import com.mtesazi.sharedlibrary.kafka.EmployeeCreatedEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,12 +25,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
-    private final DepartmentClient departmentClient;
+    private final DepartmentLookupService departmentLookupService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public EmployeeResponse createEmployee(EmployeeRequest request) {
-        departmentClient.validateDepartmentExists(request.getDepartment());
+        departmentLookupService.validateDepartmentExists(request.getDepartment());
         Employee employee = employeeMapper.toEntity(request);
         Employee savedEmployee = employeeRepository.save(employee);
         applicationEventPublisher.publishEvent(new EmployeeCreatedEvent(
@@ -62,7 +62,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
-        departmentClient.validateDepartmentExists(request.getDepartment());
+        departmentLookupService.validateDepartmentExists(request.getDepartment());
         Employee employee = findEmployeeOrThrow(id);
         employeeMapper.applyRequestToEntity(request, employee);
         Employee updatedEmployee = employeeRepository.save(employee);
@@ -73,7 +73,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
         Employee employee = findEmployeeOrThrow(id);
-        DepartmentResponse department = departmentClient.findDepartmentByReference(employee.getDepartment());
+        var department = departmentLookupService.findDepartmentByReference(employee.getDepartment());
         Long departmentId = department != null ? department.id() : null;
         return new EmployeeDetailsResponse(
                 employee.getId(),
