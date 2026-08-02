@@ -2,43 +2,4 @@ spring:
   application:
     name: department-service
   config:
-    import: optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888}
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-  datasource:
-    url: jdbc:postgresql://postgres:5432/department_db
-    username: postgres
-    password: password
-    driver-class-name: org.postgresql.Driver
-  flyway:
-    locations: classpath:db/migration
-
-server:
-  port: 8082
-  servlet:
-    context-path: /
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}
-    register-with-eureka: true
-    fetch-registry: true
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
