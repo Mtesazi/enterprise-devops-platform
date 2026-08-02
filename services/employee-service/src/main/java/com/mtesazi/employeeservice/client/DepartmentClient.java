@@ -5,6 +5,11 @@ import com.mtesazi.employeeservice.config.DepartmentServiceClientProperties;
 import com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException;
 import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException;
 import com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -15,6 +20,7 @@ import org.springframework.web.client.RestClient;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Component
 public class DepartmentClient {
@@ -24,13 +30,20 @@ public class DepartmentClient {
 
     private final RestClient restClient;
     private final DepartmentServiceClientProperties properties;
+    private final CircuitBreaker circuitBreaker;
+    private final Retry retry;
 
-    public DepartmentClient(RestClient.Builder restClientBuilder, DepartmentServiceClientProperties properties) {
+    public DepartmentClient(RestClient.Builder restClientBuilder,
+                            DepartmentServiceClientProperties properties,
+                            CircuitBreakerRegistry circuitBreakerRegistry,
+                            RetryRegistry retryRegistry) {
         this.restClient = restClientBuilder
                 .requestFactory(createRequestFactory(properties))
                 .baseUrl(properties.getBaseUrl())
                 .build();
         this.properties = properties;
+        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("departmentService");
+        this.retry = retryRegistry.retry("departmentService");
     }
 
     public void validateDepartmentExists(String departmentReference) {
@@ -54,6 +67,20 @@ public class DepartmentClient {
     }
 
     private List<DepartmentResponse> fetchDepartments() {
+        Supplier<List<DepartmentResponse>> supplier = this::fetchDepartmentsFromApi;
+        Supplier<List<DepartmentResponse>> withCircuitBreaker = CircuitBreaker.decorateSupplier(circuitBreaker, supplier);
+        Supplier<List<DepartmentResponse>> withRetry = Retry.decorateSupplier(retry, withCircuitBreaker);
+
+        try {
+            return withRetry.get();
+        } catch (CallNotPermittedException ex) {
+            throw new DepartmentServiceCommunicationException("Department service circuit breaker is open", ex);
+        } catch (DepartmentServiceTimeoutException | DepartmentServiceCommunicationException ex) {
+            throw ex;
+        }
+    }
+
+    private List<DepartmentResponse> fetchDepartmentsFromApi() {
         try {
             List<DepartmentResponse> departments = restClient.get()
                     .uri("/api/v1/departments")
