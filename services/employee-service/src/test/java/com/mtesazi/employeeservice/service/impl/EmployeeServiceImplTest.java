@@ -7,6 +7,7 @@ import com.mtesazi.employeeservice.entity.Employee;
 import com.mtesazi.employeeservice.exception.EmployeeNotFoundException;
 import com.mtesazi.employeeservice.mapper.EmployeeMapper;
 import com.mtesazi.employeeservice.repository.EmployeeRepository;
+import com.mtesazi.employeeservice.service.DepartmentLookupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,7 +35,7 @@ class EmployeeServiceImplTest {
     private EmployeeMapper employeeMapper;
 
     @Mock
-    private DepartmentClient departmentClient;
+    private DepartmentLookupService departmentLookupService;
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
@@ -57,7 +58,7 @@ class EmployeeServiceImplTest {
         DepartmentResponse department = new DepartmentResponse(10L, "Engineering", "ENG");
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(departmentClient.findDepartmentByReference("ENG")).thenReturn(department);
+        when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(department);
 
         EmployeeDetailsResponse response = employeeService.getEmployeeDetailsById(1L);
 
@@ -67,7 +68,7 @@ class EmployeeServiceImplTest {
         assertEquals("jane.doe@example.com", response.email());
         assertEquals(10L, response.departmentId());
         assertEquals(department, response.department());
-        verify(departmentClient).findDepartmentByReference("ENG");
+        verify(departmentLookupService).findDepartmentByReference("ENG");
     }
 
     @Test
@@ -80,6 +81,6 @@ class EmployeeServiceImplTest {
         );
 
         assertEquals("Employee 99 not found", exception.getMessage());
-        verify(departmentClient, never()).findDepartmentByReference(org.mockito.ArgumentMatchers.anyString());
+        verify(departmentLookupService, never()).findDepartmentByReference(org.mockito.ArgumentMatchers.anyString());
     }
 }
