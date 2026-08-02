@@ -1,6 +1,7 @@
 package com.mtesazi.employeeservice.controller;
 
 import com.mtesazi.employeeservice.dto.DeleteEmployeeResponse;
+import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
 import com.mtesazi.employeeservice.service.EmployeeService;
@@ -41,6 +42,13 @@ public class EmployeeController {
             @Parameter(description = "Employee ID", example = "1")
             @PathVariable("id") Long id) {
         return ResponseEntity.ok(employeeService.getEmployeeById(id));
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<EmployeeDetailsResponse> getEmployeeDetailsById(
+            @Parameter(description = "Employee ID", example = "1")
+            @PathVariable("id") Long id) {
+        return ResponseEntity.ok(employeeService.getEmployeeDetailsById(id));
     }
 
     @PutMapping("/{id}")
