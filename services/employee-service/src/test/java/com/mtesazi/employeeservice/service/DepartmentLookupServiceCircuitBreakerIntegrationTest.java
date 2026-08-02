@@ -11,9 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 
+import static org.mockito.Mockito.doThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
 @SpringBootTest(
         classes = DepartmentLookupServiceCircuitBreakerIntegrationTest.TestConfig.class,
@@ -54,24 +54,25 @@ class DepartmentLookupServiceCircuitBreakerIntegrationTest {
 
     @Test
     void opensCircuitBreakerAfterRepeatedCommunicationFailures() {
-        when(departmentClient.findDepartmentByReference("ENG"))
-                .thenThrow(new DepartmentServiceCommunicationException("Could not reach department service"));
+        doThrow(new DepartmentServiceCommunicationException("Could not reach department service"))
+                .when(departmentClient)
+                .validateDepartmentExists("ENG");
 
         assertThrows(
                 DepartmentServiceCommunicationException.class,
-                () -> departmentLookupService.findDepartmentByReference("ENG")
+                () -> departmentLookupService.validateDepartmentExists("ENG")
         );
 
         DepartmentServiceCommunicationException exception = assertThrows(
                 DepartmentServiceCommunicationException.class,
-                () -> departmentLookupService.findDepartmentByReference("ENG")
+                () -> departmentLookupService.validateDepartmentExists("ENG")
         );
 
         assertEquals("Could not reach department service", exception.getMessage());
 
         exception = assertThrows(
                 DepartmentServiceCommunicationException.class,
-                () -> departmentLookupService.findDepartmentByReference("ENG")
+                () -> departmentLookupService.validateDepartmentExists("ENG")
         );
 
         assertEquals("Department service circuit breaker is open", exception.getMessage());

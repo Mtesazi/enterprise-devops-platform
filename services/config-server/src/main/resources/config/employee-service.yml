@@ -47,10 +47,12 @@ resilience4j:
   circuitbreaker:
     instances:
       departmentService:
+        sliding-window-type: COUNT_BASED
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 3
         ignore-exceptions:
           - com.mtesazi.employeeservice.exception.EmployeeNotFoundException
           - com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException
@@ -62,6 +64,10 @@ resilience4j:
         ignore-exceptions:
           - com.mtesazi.employeeservice.exception.EmployeeNotFoundException
           - com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException
+  timelimiter:
+    instances:
+      departmentService:
+        timeout-duration: 5s
 
 springdoc:
   swagger-ui:

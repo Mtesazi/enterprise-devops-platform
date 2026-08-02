@@ -43,12 +43,10 @@ class DepartmentLookupServiceTest {
         DepartmentServiceTimeoutException timeoutException =
                 new DepartmentServiceTimeoutException("Department service timed out after 3000ms", new RuntimeException("timeout"));
 
-        DepartmentServiceTimeoutException exception = assertThrows(
-                DepartmentServiceTimeoutException.class,
-                () -> departmentLookupService.findDepartmentByReferenceFallback("ENG", timeoutException)
-        );
+        DepartmentResponse response = departmentLookupService.findDepartmentByReferenceFallback("ENG", timeoutException);
 
-        assertSame(timeoutException, exception);
+        assertEquals("Department Service Unavailable", response.name());
+        assertEquals("N/A", response.code());
     }
 
     @Test
@@ -68,12 +66,9 @@ class DepartmentLookupServiceTest {
     void fallbackWrapsUnexpectedFailures() {
         IllegalStateException cause = new IllegalStateException("boom");
 
-        DepartmentServiceCommunicationException exception = assertThrows(
-                DepartmentServiceCommunicationException.class,
-                () -> departmentLookupService.findDepartmentByReferenceFallback("ENG", cause)
-        );
+        DepartmentResponse response = departmentLookupService.findDepartmentByReferenceFallback("ENG", cause);
 
-        assertEquals("Department service request failed", exception.getMessage());
-        assertSame(cause, exception.getCause());
+        assertEquals("Department Service Unavailable", response.name());
+        assertEquals("N/A", response.code());
     }
 }
