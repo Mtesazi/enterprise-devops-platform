@@ -89,7 +89,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
-      DEPARTMENT_SERVICE_BASE_URL: http://department-service
+      DEPARTMENT_SERVICE_BASE_URL: http://DEPARTMENT-SERVICE
       CONFIG_SERVER_URL: http://config-server:8888
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
@@ -111,6 +111,39 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
+      SERVER_PORT: 8082
+    depends_on:
+      - postgres
+      - config-server
+      - discovery-server
+
+  department-service-2:
+    build:
+      context: .
+      dockerfile: services/department-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/department_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      CONFIG_SERVER_URL: http://config-server:8888
+      SERVER_PORT: 8083
+    depends_on:
+      - postgres
+      - config-server
+      - discovery-server
+
+  department-service-3:
+    build:
+      context: .
+      dockerfile: services/department-service/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/department_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      CONFIG_SERVER_URL: http://config-server:8888
+      SERVER_PORT: 8084
     depends_on:
       - postgres
       - config-server
