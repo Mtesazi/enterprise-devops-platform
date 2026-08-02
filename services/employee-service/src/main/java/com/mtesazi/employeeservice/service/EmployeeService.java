@@ -1,6 +1,7 @@
 package com.mtesazi.employeeservice.service;
 
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
+import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
 import jakarta.validation.Valid;
 
@@ -13,6 +14,8 @@ public interface EmployeeService {
     List<EmployeeResponse> getAllEmployees();
 
     EmployeeResponse getEmployeeById(Long id);
+
+    EmployeeDetailsResponse getEmployeeDetailsById(Long id);
 
     EmployeeResponse updateEmployee(Long id, @Valid EmployeeRequest request);
 

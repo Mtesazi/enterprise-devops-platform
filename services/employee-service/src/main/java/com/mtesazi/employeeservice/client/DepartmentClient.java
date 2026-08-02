@@ -1,63 +1,64 @@
-package com.mtesazi.employeeservice.integration;
+package com.mtesazi.employeeservice.client;
 
+import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
 import com.mtesazi.employeeservice.config.DepartmentServiceClientProperties;
 import com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException;
 import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException;
 import com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.client.RestClient;
 
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-public class DepartmentServiceClient {
+public class DepartmentClient {
 
-    private static final ParameterizedTypeReference<List<DepartmentSummary>> DEPARTMENT_LIST_TYPE =
+    private static final ParameterizedTypeReference<List<DepartmentResponse>> DEPARTMENT_LIST_TYPE =
             new ParameterizedTypeReference<>() {};
 
-    private final RestTemplate departmentServiceRestTemplate;
+    private final RestClient restClient;
     private final DepartmentServiceClientProperties properties;
+
+    public DepartmentClient(RestClient.Builder restClientBuilder, DepartmentServiceClientProperties properties) {
+        this.restClient = restClientBuilder
+                .requestFactory(createRequestFactory(properties))
+                .baseUrl(properties.getBaseUrl())
+                .build();
+        this.properties = properties;
+    }
 
     public void validateDepartmentExists(String departmentReference) {
         if (departmentReference == null || departmentReference.isBlank()) {
             return;
         }
-
-        List<DepartmentSummary> departments = fetchDepartments();
-        boolean exists = departments.stream()
-                .anyMatch(department -> departmentReference.equalsIgnoreCase(department.getCode())
-                        || departmentReference.equalsIgnoreCase(department.getName()));
-
-        if (!exists) {
-            throw new DepartmentReferenceNotFoundException(
-                    "Department '" + departmentReference + "' does not exist");
-        }
+        findDepartmentByReference(departmentReference);
     }
 
-    private List<DepartmentSummary> fetchDepartments() {
-        String uri = UriComponentsBuilder.fromUriString(properties.getBaseUrl())
-                .path("/api/v1/departments")
-                .toUriString();
+    public DepartmentResponse findDepartmentByReference(String departmentReference) {
+        if (departmentReference == null || departmentReference.isBlank()) {
+            return null;
+        }
 
+        return fetchDepartments().stream()
+                .filter(department -> departmentReference.equalsIgnoreCase(department.code())
+                        || departmentReference.equalsIgnoreCase(department.name()))
+                .findFirst()
+                .orElseThrow(() -> new DepartmentReferenceNotFoundException(
+                        "Department '" + departmentReference + "' does not exist"));
+    }
+
+    private List<DepartmentResponse> fetchDepartments() {
         try {
-            ResponseEntity<List<DepartmentSummary>> response = departmentServiceRestTemplate.exchange(
-                    uri,
-                    HttpMethod.GET,
-                    null,
-                    DEPARTMENT_LIST_TYPE
-            );
-
-            List<DepartmentSummary> departments = response.getBody();
+            List<DepartmentResponse> departments = restClient.get()
+                    .uri("/api/v1/departments")
+                    .retrieve()
+                    .body(DEPARTMENT_LIST_TYPE);
             if (departments == null) {
                 throw new DepartmentServiceCommunicationException("Department service returned an empty response body");
             }
@@ -90,4 +91,10 @@ public class DepartmentServiceClient {
         return false;
     }
 
+    private SimpleClientHttpRequestFactory createRequestFactory(DepartmentServiceClientProperties properties) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout((int) properties.getConnectTimeout().toMillis());
+        requestFactory.setReadTimeout((int) properties.getReadTimeout().toMillis());
+        return requestFactory;
+    }
 }

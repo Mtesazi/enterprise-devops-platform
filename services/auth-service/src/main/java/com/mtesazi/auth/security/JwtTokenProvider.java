@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -22,11 +23,16 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
 
     public String generateAccessToken(User user) {
-        return generateToken(user.getUsername(), jwtProperties.getAccessTokenExpiration(), ACCESS_TOKEN_TYPE);
+        return generateToken(
+                user.getUsername(),
+                jwtProperties.getAccessTokenExpiration(),
+                ACCESS_TOKEN_TYPE,
+                user.getRoles()
+        );
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user.getUsername(), jwtProperties.getRefreshTokenExpiration(), REFRESH_TOKEN_TYPE);
+        return generateToken(user.getUsername(), jwtProperties.getRefreshTokenExpiration(), REFRESH_TOKEN_TYPE, null);
     }
 
     public String extractUsername(String token) {
@@ -51,16 +57,21 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    private String generateToken(String subject, long expiration, String tokenType) {
+    private String generateToken(String subject, long expiration, String tokenType, List<String> roles) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expiration);
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(subject)
                 .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(getSigningKey())
-                .compact();
+                .signWith(getSigningKey());
+
+        if (roles != null) {
+            builder.claim("roles", roles);
+        }
+
+        return builder.compact();
     }
 
     private Claims parseClaims(String token) {

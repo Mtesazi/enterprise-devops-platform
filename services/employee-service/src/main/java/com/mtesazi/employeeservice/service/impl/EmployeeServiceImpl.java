@@ -1,10 +1,12 @@
 package com.mtesazi.employeeservice.service.impl;
 
+import com.mtesazi.employeeservice.client.DepartmentClient;
+import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
+import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
 import com.mtesazi.employeeservice.entity.Employee;
 import com.mtesazi.employeeservice.exception.EmployeeNotFoundException;
-import com.mtesazi.employeeservice.integration.DepartmentServiceClient;
 import com.mtesazi.employeeservice.mapper.EmployeeMapper;
 import com.mtesazi.employeeservice.repository.EmployeeRepository;
 import com.mtesazi.employeeservice.service.EmployeeService;
@@ -23,12 +25,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
-    private final DepartmentServiceClient departmentServiceClient;
+    private final DepartmentClient departmentClient;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public EmployeeResponse createEmployee(EmployeeRequest request) {
-        departmentServiceClient.validateDepartmentExists(request.getDepartment());
+        departmentClient.validateDepartmentExists(request.getDepartment());
         Employee employee = employeeMapper.toEntity(request);
         Employee savedEmployee = employeeRepository.save(employee);
         applicationEventPublisher.publishEvent(new EmployeeCreatedEvent(
@@ -60,11 +62,27 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
-        departmentServiceClient.validateDepartmentExists(request.getDepartment());
+        departmentClient.validateDepartmentExists(request.getDepartment());
         Employee employee = findEmployeeOrThrow(id);
         employeeMapper.applyRequestToEntity(request, employee);
         Employee updatedEmployee = employeeRepository.save(employee);
         return employeeMapper.toResponse(updatedEmployee);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
+        Employee employee = findEmployeeOrThrow(id);
+        DepartmentResponse department = departmentClient.findDepartmentByReference(employee.getDepartment());
+        Long departmentId = department != null ? department.id() : null;
+        return new EmployeeDetailsResponse(
+                employee.getId(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getEmail(),
+                departmentId,
+                department
+        );
     }
 
     @Override
