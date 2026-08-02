@@ -72,6 +72,33 @@ class EmployeeServiceImplTest {
     }
 
     @Test
+    void getEmployeeDetailsByIdReturnsControlledDepartmentFallback() {
+        Employee employee = new Employee(
+                1L,
+                "Bongani",
+                "Gumede",
+                "bongani.gumede@example.com",
+                "ENG",
+                BigDecimal.valueOf(125000),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        DepartmentResponse fallbackDepartment = new DepartmentResponse(null, "Department Service Unavailable", "N/A");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(fallbackDepartment);
+
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetailsById(1L);
+
+        assertEquals(1L, response.id());
+        assertEquals("Bongani", response.firstName());
+        assertEquals("Gumede", response.lastName());
+        assertEquals("bongani.gumede@example.com", response.email());
+        assertEquals(null, response.departmentId());
+        assertEquals(fallbackDepartment, response.department());
+    }
+
+    @Test
     void getEmployeeDetailsByIdThrowsWhenEmployeeDoesNotExist() {
         when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
 

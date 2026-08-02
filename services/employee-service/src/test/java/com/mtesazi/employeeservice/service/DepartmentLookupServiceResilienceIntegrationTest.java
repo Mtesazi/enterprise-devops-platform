@@ -69,4 +69,18 @@ class DepartmentLookupServiceResilienceIntegrationTest {
         assertEquals(response, result);
         verify(departmentClient, times(3)).findDepartmentByReference("ENG");
     }
+
+    @Test
+    void returnsUnavailableDepartmentWhenRetriesAreExhausted() {
+        when(departmentClient.findDepartmentByReference("ENG"))
+                .thenThrow(new DepartmentServiceTimeoutException("timeout-1", new RuntimeException("timeout-1")))
+                .thenThrow(new DepartmentServiceTimeoutException("timeout-2", new RuntimeException("timeout-2")))
+                .thenThrow(new DepartmentServiceTimeoutException("timeout-3", new RuntimeException("timeout-3")));
+
+        DepartmentResponse result = departmentLookupService.findDepartmentByReference("ENG");
+
+        assertEquals("Department Service Unavailable", result.name());
+        assertEquals("N/A", result.code());
+        verify(departmentClient, times(3)).findDepartmentByReference("ENG");
+    }
 }

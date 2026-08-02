@@ -17,13 +17,13 @@ public class DepartmentLookupService {
 
     private final DepartmentClient departmentClient;
 
-    @CircuitBreaker(name = "departmentService", fallbackMethod = "validateDepartmentExistsFallback")
+    @CircuitBreaker(name = "departmentService")
     @Retry(name = "departmentService", fallbackMethod = "validateDepartmentExistsFallback")
     public void validateDepartmentExists(String departmentReference) {
         departmentClient.validateDepartmentExists(departmentReference);
     }
 
-    @CircuitBreaker(name = "departmentService", fallbackMethod = "findDepartmentByReferenceFallback")
+    @CircuitBreaker(name = "departmentService")
     @Retry(name = "departmentService", fallbackMethod = "findDepartmentByReferenceFallback")
     public DepartmentResponse findDepartmentByReference(String departmentReference) {
         return departmentClient.findDepartmentByReference(departmentReference);
@@ -31,7 +31,13 @@ public class DepartmentLookupService {
 
     @SuppressWarnings("unused")
     DepartmentResponse findDepartmentByReferenceFallback(String departmentReference, Throwable throwable) {
-        throw mapDepartmentFailure(throwable);
+        DepartmentReferenceNotFoundException departmentReferenceNotFoundException =
+                findCause(throwable, DepartmentReferenceNotFoundException.class);
+        if (departmentReferenceNotFoundException != null) {
+            throw departmentReferenceNotFoundException;
+        }
+
+        return unavailableDepartmentResponse();
     }
 
     @SuppressWarnings("unused")
@@ -66,6 +72,14 @@ public class DepartmentLookupService {
 
         Throwable rootCause = unwrapCause(throwable);
         return new DepartmentServiceCommunicationException("Department service request failed", rootCause);
+    }
+
+    private DepartmentResponse unavailableDepartmentResponse() {
+        return new DepartmentResponse(
+                null,
+                "Department Service Unavailable",
+                "N/A"
+        );
     }
 
     private Throwable unwrapCause(Throwable throwable) {
