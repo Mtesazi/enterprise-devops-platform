@@ -39,7 +39,7 @@ eureka:
 
 services:
   department:
-    base-url: http://DEPARTMENT-SERVICE
+    base-url: http://department-service
     connect-timeout: 2s
     read-timeout: 3s
 
