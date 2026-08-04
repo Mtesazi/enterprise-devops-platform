@@ -41,6 +41,13 @@ public class DepartmentClient {
         findDepartmentByReference(departmentReference);
     }
 
+    public DepartmentResponse getDepartmentById(Long departmentId) {
+        return restClient.get()
+                .uri("http://localhost:8082/api/departments/{id}", departmentId)
+                .retrieve()
+                .body(DepartmentResponse.class);
+    }
+
     public DepartmentResponse findDepartmentByReference(String departmentReference) {
         if (departmentReference == null || departmentReference.isBlank()) {
             return null;
