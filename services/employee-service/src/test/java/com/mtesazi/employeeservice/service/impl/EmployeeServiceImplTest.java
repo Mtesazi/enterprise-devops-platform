@@ -55,7 +55,7 @@ class EmployeeServiceImplTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
-        DepartmentResponse department = new DepartmentResponse(10L, "Engineering", "ENG");
+        DepartmentResponse department = new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department");
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(department);
@@ -83,7 +83,7 @@ class EmployeeServiceImplTest {
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
-        DepartmentResponse fallbackDepartment = new DepartmentResponse(null, "Department Service Unavailable", "N/A");
+        DepartmentResponse fallbackDepartment = new DepartmentResponse(null, "Department Service Unavailable", "N/A", "Service unavailable");
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(fallbackDepartment);

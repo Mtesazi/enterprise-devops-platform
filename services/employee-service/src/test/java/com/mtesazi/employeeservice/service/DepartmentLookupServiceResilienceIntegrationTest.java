@@ -57,7 +57,7 @@ class DepartmentLookupServiceResilienceIntegrationTest {
 
     @Test
     void retriesTransientTimeoutsBeforeReturningDepartment() {
-        DepartmentResponse response = new DepartmentResponse(10L, "Engineering", "ENG");
+        DepartmentResponse response = new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department");
 
         when(departmentClient.findDepartmentByReference("ENG"))
                 .thenThrow(new DepartmentServiceTimeoutException("timeout-1", new RuntimeException("timeout-1")))

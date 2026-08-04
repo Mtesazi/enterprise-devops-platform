@@ -43,7 +43,7 @@ public class DepartmentClient {
 
     public DepartmentResponse getDepartmentById(Long departmentId) {
         return restClient.get()
-                .uri("http://localhost:8082/api/departments/{id}", departmentId)
+                .uri("/api/departments/{id}", departmentId)
                 .retrieve()
                 .body(DepartmentResponse.class);
     }

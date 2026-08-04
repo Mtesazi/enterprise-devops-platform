@@ -28,7 +28,7 @@ class DepartmentLookupServiceTest {
 
     @Test
     void findDepartmentByReferenceDelegatesToClient() {
-        DepartmentResponse response = new DepartmentResponse(10L, "Engineering", "ENG");
+        DepartmentResponse response = new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department");
 
         when(departmentClient.findDepartmentByReference("ENG")).thenReturn(response);
 

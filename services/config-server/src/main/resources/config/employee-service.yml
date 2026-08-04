@@ -11,7 +11,7 @@ spring:
               type:
                 headers: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/employee_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/employee_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
@@ -33,13 +33,13 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://discovery-server:8761/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
     register-with-eureka: true
     fetch-registry: true
 
 services:
   department:
-    base-url: http://department-service
+    base-url: ${SERVICES_DEPARTMENT_BASE_URL:http://localhost:8082}
     connect-timeout: 2s
     read-timeout: 3s
 

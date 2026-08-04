@@ -34,7 +34,7 @@ class EmployeeControllerTest {
                 "Doe",
                 "jane.doe@example.com",
                 10L,
-                new DepartmentResponse(10L, "Engineering", "ENG")
+                new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department")
         );
 
         when(employeeService.getEmployeeDetailsById(1L)).thenReturn(response);
