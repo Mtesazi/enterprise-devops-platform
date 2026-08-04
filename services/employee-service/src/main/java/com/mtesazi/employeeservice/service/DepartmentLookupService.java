@@ -78,7 +78,8 @@ public class DepartmentLookupService {
         return new DepartmentResponse(
                 null,
                 "Department Service Unavailable",
-                "N/A"
+                "N/A",
+                "Department service unavailable"
         );
     }
 
