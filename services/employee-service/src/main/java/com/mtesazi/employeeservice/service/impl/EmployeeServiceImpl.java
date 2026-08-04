@@ -1,6 +1,7 @@
 package com.mtesazi.employeeservice.service.impl;
 
 import com.mtesazi.employeeservice.client.DepartmentClient;
+import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
 import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
@@ -26,6 +27,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final DepartmentLookupService departmentLookupService;
+    private final DepartmentClient departmentClient;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -73,14 +75,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
         Employee employee = findEmployeeOrThrow(id);
-        var department = departmentLookupService.findDepartmentByReference(employee.getDepartment());
-        Long departmentId = department != null ? department.id() : null;
+        DepartmentResponse department = resolveDepartment(employee.getDepartment());
         return new EmployeeDetailsResponse(
                 employee.getId(),
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getEmail(),
-                departmentId,
+                department != null ? department.id() : null,
                 department
         );
     }
@@ -94,5 +95,17 @@ public class EmployeeServiceImpl implements EmployeeService {
     private Employee findEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee " + id + " not found"));
+    }
+
+    private DepartmentResponse resolveDepartment(String departmentReference) {
+        if (departmentReference == null || departmentReference.isBlank()) {
+            return null;
+        }
+
+        try {
+            return departmentClient.getDepartmentById(Long.parseLong(departmentReference));
+        } catch (NumberFormatException ex) {
+            return departmentLookupService.findDepartmentByReference(departmentReference);
+        }
     }
 }
