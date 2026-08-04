@@ -21,7 +21,7 @@ public class GatewayRoutesConfig {
                         .path("/api/v1/employees/**")
                         .uri(properties.getEmployee().getBaseUrl()))
                 .route("department-service-route", r -> r
-                        .path("/api/v1/departments/**")
+                        .path("/api/v1/departments/**", "/api/departments/**")
                         .uri(properties.getDepartment().getBaseUrl()))
                 .build();
     }
