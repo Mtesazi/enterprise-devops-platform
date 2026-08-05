@@ -19,6 +19,7 @@ import java.util.List;
 @Component
 public class DepartmentClient {
 
+    private static final String DEPARTMENT_SERVICE_BASE_URI = "http://department-service";
     private static final ParameterizedTypeReference<List<DepartmentResponse>> DEPARTMENT_LIST_TYPE =
             new ParameterizedTypeReference<>() {};
 
@@ -29,7 +30,6 @@ public class DepartmentClient {
                             DepartmentServiceClientProperties properties) {
         this.restClient = restClientBuilder
                 .requestFactory(createRequestFactory(properties))
-                .baseUrl(properties.getBaseUrl())
                 .build();
         this.properties = properties;
     }
@@ -42,14 +42,14 @@ public class DepartmentClient {
     }
 
     public DepartmentResponse getDepartmentById(Long departmentId) {
-        return restClient.get()
-                .uri("/api/departments/{id}", departmentId)
-                .retrieve()
-                .body(DepartmentResponse.class);
+        return fetchDepartmentById(departmentId);
     }
 
     public DepartmentResponse getDepartment(Long departmentId) {
-        return getDepartmentById(departmentId);
+        return restClient.get()
+                .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments/{id}", departmentId)
+                .retrieve()
+                .body(DepartmentResponse.class);
     }
 
     public DepartmentResponse findDepartmentByReference(String departmentReference) {
@@ -72,7 +72,7 @@ public class DepartmentClient {
     private DepartmentResponse fetchDepartmentById(Long departmentId) {
         try {
             return restClient.get()
-                    .uri("/api/v1/departments/{id}", departmentId)
+                    .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments/{id}", departmentId)
                     .retrieve()
                     .body(DepartmentResponse.class);
         } catch (ResourceAccessException ex) {
@@ -100,7 +100,7 @@ public class DepartmentClient {
     private List<DepartmentResponse> fetchDepartmentsFromApi() {
         try {
             List<DepartmentResponse> departments = restClient.get()
-                    .uri("/api/v1/departments")
+                    .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments")
                     .retrieve()
                     .body(DEPARTMENT_LIST_TYPE);
             if (departments == null) {
