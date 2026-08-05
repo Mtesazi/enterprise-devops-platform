@@ -73,7 +73,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional(readOnly = true)
-    public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
+    public EmployeeDetailsResponse getEmployeeDetails(Long id) {
         Employee employee = findEmployeeOrThrow(id);
         DepartmentResponse department = resolveDepartment(employee.getDepartment());
         return new EmployeeDetailsResponse(
@@ -84,6 +84,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                 department != null ? department.id() : null,
                 department
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
+        return getEmployeeDetails(id);
     }
 
     @Override
@@ -101,9 +107,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (departmentReference == null || departmentReference.isBlank()) {
             return null;
         }
-
         try {
-            return departmentClient.getDepartmentById(Long.parseLong(departmentReference));
+            return departmentClient.getDepartment(Long.parseLong(departmentReference));
         } catch (NumberFormatException ex) {
             return departmentLookupService.findDepartmentByReference(departmentReference);
         }

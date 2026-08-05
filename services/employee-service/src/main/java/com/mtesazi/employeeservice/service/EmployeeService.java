@@ -15,6 +15,8 @@ public interface EmployeeService {
 
     EmployeeResponse getEmployeeById(Long id);
 
+    EmployeeDetailsResponse getEmployeeDetails(Long id);
+
     EmployeeDetailsResponse getEmployeeDetailsById(Long id);
 
     EmployeeResponse updateEmployee(Long id, @Valid EmployeeRequest request);

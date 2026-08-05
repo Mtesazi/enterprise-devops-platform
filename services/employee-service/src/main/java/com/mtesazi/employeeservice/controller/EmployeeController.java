@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/employees")
+@RequestMapping({"/api/v1/employees", "/api/employees"})
 @RequiredArgsConstructor
 public class EmployeeController {
 
@@ -57,10 +57,10 @@ public class EmployeeController {
             @ApiResponse(responseCode = "503", description = "Department service unavailable", content = @Content),
             @ApiResponse(responseCode = "504", description = "Department service timeout", content = @Content)
     })
-    public ResponseEntity<EmployeeDetailsResponse> getEmployeeDetailsById(
+    public ResponseEntity<EmployeeDetailsResponse> getEmployeeDetails(
             @Parameter(description = "Employee ID", example = "1")
             @PathVariable("id") Long id) {
-        return ResponseEntity.ok(employeeService.getEmployeeDetailsById(id));
+        return ResponseEntity.ok(employeeService.getEmployeeDetails(id));
     }
 
     @PutMapping("/{id}")
