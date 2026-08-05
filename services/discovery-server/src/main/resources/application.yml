@@ -1,5 +1,23 @@
 spring:
   application:
     name: discovery-server
+  cloud:
+    config:
+      enabled: ${SPRING_CLOUD_CONFIG_ENABLED:false}
+      import-check:
+        enabled: false
   config:
-    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+    import: optional:${CONFIG_IMPORT:}
+
+server:
+  port: ${SERVER_PORT:8761}
+
+eureka:
+  client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+  server:
+    enable-self-preservation: false
