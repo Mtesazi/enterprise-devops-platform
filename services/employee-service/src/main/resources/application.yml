@@ -21,8 +21,11 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
+department-service:
+  base-url: ${DEPARTMENT_SERVICE_BASE_URL:http://localhost:8082}
+
 services:
   department:
-    base-url: ${SERVICES_DEPARTMENT_BASE_URL:http://localhost:8082}
+    base-url: ${SERVICES_DEPARTMENT_BASE_URL:${department-service.base-url}}
     connect-timeout: 2s
     read-timeout: 3s

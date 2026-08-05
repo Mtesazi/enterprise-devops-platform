@@ -48,6 +48,10 @@ public class DepartmentClient {
                 .body(DepartmentResponse.class);
     }
 
+    public DepartmentResponse getDepartment(Long departmentId) {
+        return getDepartmentById(departmentId);
+    }
+
     public DepartmentResponse findDepartmentByReference(String departmentReference) {
         if (departmentReference == null || departmentReference.isBlank()) {
             return null;
