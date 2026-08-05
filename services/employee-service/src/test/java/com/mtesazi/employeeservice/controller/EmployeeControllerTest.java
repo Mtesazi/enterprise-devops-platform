@@ -27,7 +27,7 @@ class EmployeeControllerTest {
     private EmployeeService employeeService;
 
     @Test
-    void getEmployeeDetailsByIdReturnsAggregatedEmployeePayload() throws Exception {
+    void getEmployeeDetailsReturnsAggregatedEmployeePayload() throws Exception {
         EmployeeDetailsResponse response = new EmployeeDetailsResponse(
                 1L,
                 "Jane",
@@ -37,9 +37,9 @@ class EmployeeControllerTest {
                 new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department")
         );
 
-        when(employeeService.getEmployeeDetailsById(1L)).thenReturn(response);
+        when(employeeService.getEmployeeDetails(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/employees/{id}/details", 1L)
+        mockMvc.perform(get("/api/employees/{id}/details", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -51,15 +51,15 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.department.name").value("Engineering"))
                 .andExpect(jsonPath("$.department.code").value("ENG"));
 
-        verify(employeeService).getEmployeeDetailsById(1L);
+        verify(employeeService).getEmployeeDetails(1L);
     }
 
     @Test
-    void getEmployeeDetailsByIdReturnsNotFoundWhenEmployeeDoesNotExist() throws Exception {
-        when(employeeService.getEmployeeDetailsById(999L))
+    void getEmployeeDetailsReturnsNotFoundWhenEmployeeDoesNotExist() throws Exception {
+        when(employeeService.getEmployeeDetails(999L))
                 .thenThrow(new EmployeeNotFoundException("Employee 999 not found"));
 
-        mockMvc.perform(get("/api/v1/employees/{id}/details", 999L)
+        mockMvc.perform(get("/api/employees/{id}/details", 999L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Employee 999 not found"));
