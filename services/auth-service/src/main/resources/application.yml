@@ -1,5 +1,41 @@
 spring:
   application:
     name: auth-service
+  cloud:
+    config:
+      enabled: ${SPRING_CLOUD_CONFIG_ENABLED:false}
+      import-check:
+        enabled: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    locations: classpath:db/migration
   config:
-    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+    import: optional:${CONFIG_IMPORT:}
+
+server:
+  port: ${SERVER_PORT:8083}
+
+eureka:
+  client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+    register-with-eureka: ${EUREKA_CLIENT_REGISTER:true}
+    fetch-registry: ${EUREKA_CLIENT_FETCH:true}
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+    access-token-expiration: 900000
+    refresh-token-expiration: 604800000

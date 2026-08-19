@@ -30,11 +30,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
                 "spring.cloud.discovery.enabled=true",
                 "eureka.client.enabled=false",
                 "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration",
-                "services.department.base-url=http://DEPARTMENT-SERVICE",
+                "services.department.base-url=http://department-service",
                 "services.department.connect-timeout=100ms",
-                "services.department.read-timeout=100ms",
-                "spring.cloud.discovery.client.simple.instances.DEPARTMENT-SERVICE[0].uri=http://localhost:${test.stopped-port}",
-                "spring.cloud.discovery.client.simple.instances.DEPARTMENT-SERVICE[1].uri=http://localhost:${test.healthy-port}",
+                "services.department.read-timeout=2s",
+                "spring.cloud.discovery.client.simple.instances.department-service[0].uri=http://localhost:${test.stopped-port}",
+                "spring.cloud.discovery.client.simple.instances.department-service[1].uri=http://localhost:${test.healthy-port}",
                 "resilience4j.retry.instances.departmentService.max-attempts=2",
                 "resilience4j.retry.instances.departmentService.wait-duration=10ms",
                 "resilience4j.circuitbreaker.instances.departmentService.sliding-window-size=2",
@@ -71,7 +71,7 @@ class DepartmentClientLoadBalancingIntegrationTest {
     void startHealthyServer() throws IOException {
         HEALTHY_REQUEST_COUNT.set(0);
         healthyServer = HttpServer.create(new InetSocketAddress(healthyPort), 0);
-        healthyServer.createContext("/api/v1/departments", exchange -> {
+        healthyServer.createContext("/api/departments", exchange -> {
             HEALTHY_REQUEST_COUNT.incrementAndGet();
             byte[] body = "[{\"id\":10,\"name\":\"Engineering\",\"code\":\"ENG\"}]".getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");

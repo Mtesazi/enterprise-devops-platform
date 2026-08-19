@@ -1,6 +1,5 @@
 package com.mtesazi.employeeservice.service.impl;
 
-import com.mtesazi.employeeservice.client.DepartmentClient;
 import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
 import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
@@ -27,7 +26,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final DepartmentLookupService departmentLookupService;
-    private final DepartmentClient departmentClient;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -87,12 +85,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public EmployeeDetailsResponse getEmployeeDetailsById(Long id) {
-        return getEmployeeDetails(id);
-    }
-
-    @Override
     public void deleteEmployee(Long id) {
         Employee employee = findEmployeeOrThrow(id);
         employeeRepository.delete(employee);
@@ -107,10 +99,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (departmentReference == null || departmentReference.isBlank()) {
             return null;
         }
-        try {
-            return departmentClient.getDepartment(Long.parseLong(departmentReference));
-        } catch (NumberFormatException ex) {
-            return departmentLookupService.findDepartmentByReference(departmentReference);
-        }
+        return departmentLookupService.findDepartmentByReference(departmentReference);
     }
 }

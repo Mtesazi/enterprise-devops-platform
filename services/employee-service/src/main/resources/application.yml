@@ -30,3 +30,23 @@ services:
     base-url: ${SERVICES_DEPARTMENT_BASE_URL:http://department-service}
     connect-timeout: 2s
     read-timeout: 3s
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      departmentService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  retry:
+    instances:
+      departmentService:
+        max-attempts: 2
+        wait-duration: 200ms
+        retry-exceptions:
+          - com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException
+          - com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException

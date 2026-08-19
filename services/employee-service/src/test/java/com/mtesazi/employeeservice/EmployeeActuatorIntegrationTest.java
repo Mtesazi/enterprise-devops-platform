@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 "spring.main.lazy-initialization=true",
                 "eureka.client.enabled=false",
                 "spring.cloud.discovery.enabled=false",
-                "services.department.base-url=http://DEPARTMENT-SERVICE",
+                "services.department.base-url=http://department-service",
                 "services.department.connect-timeout=100ms",
                 "services.department.read-timeout=100ms",
                 "management.endpoints.web.exposure.include=health,info,prometheus,metrics",

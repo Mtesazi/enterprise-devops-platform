@@ -1,6 +1,5 @@
 package com.mtesazi.employeeservice.service.impl;
 
-import com.mtesazi.employeeservice.client.DepartmentClient;
 import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
 import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.entity.Employee;
@@ -44,7 +43,7 @@ class EmployeeServiceImplTest {
     private EmployeeServiceImpl employeeService;
 
     @Test
-    void getEmployeeDetailsByIdCombinesEmployeeAndDepartmentResponses() {
+    void getEmployeeDetailsCombinesEmployeeAndDepartmentResponses() {
         Employee employee = new Employee(
                 1L,
                 "Jane",
@@ -60,7 +59,7 @@ class EmployeeServiceImplTest {
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(department);
 
-        EmployeeDetailsResponse response = employeeService.getEmployeeDetailsById(1L);
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
 
         assertEquals(1L, response.id());
         assertEquals("Jane", response.firstName());
@@ -72,7 +71,7 @@ class EmployeeServiceImplTest {
     }
 
     @Test
-    void getEmployeeDetailsByIdReturnsControlledDepartmentFallback() {
+    void getEmployeeDetailsReturnsControlledDepartmentFallback() {
         Employee employee = new Employee(
                 1L,
                 "Bongani",
@@ -88,7 +87,7 @@ class EmployeeServiceImplTest {
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(fallbackDepartment);
 
-        EmployeeDetailsResponse response = employeeService.getEmployeeDetailsById(1L);
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
 
         assertEquals(1L, response.id());
         assertEquals("Bongani", response.firstName());
@@ -99,12 +98,12 @@ class EmployeeServiceImplTest {
     }
 
     @Test
-    void getEmployeeDetailsByIdThrowsWhenEmployeeDoesNotExist() {
+    void getEmployeeDetailsThrowsWhenEmployeeDoesNotExist() {
         when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
 
         EmployeeNotFoundException exception = assertThrows(
                 EmployeeNotFoundException.class,
-                () -> employeeService.getEmployeeDetailsById(99L)
+                () -> employeeService.getEmployeeDetails(99L)
         );
 
         assertEquals("Employee 99 not found", exception.getMessage());

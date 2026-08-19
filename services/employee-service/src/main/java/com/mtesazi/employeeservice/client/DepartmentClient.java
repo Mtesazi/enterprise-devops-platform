@@ -8,6 +8,7 @@ import com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
@@ -19,7 +20,8 @@ import java.util.List;
 @Component
 public class DepartmentClient {
 
-    private static final String DEPARTMENT_SERVICE_BASE_URI = "http://department-service";
+    private static final String DEPARTMENTS_PATH = "/api/departments";
+    private static final String DEPARTMENT_BY_ID_PATH = DEPARTMENTS_PATH + "/{id}";
     private static final ParameterizedTypeReference<List<DepartmentResponse>> DEPARTMENT_LIST_TYPE =
             new ParameterizedTypeReference<>() {};
 
@@ -28,7 +30,9 @@ public class DepartmentClient {
 
     public DepartmentClient(RestClient.Builder restClientBuilder,
                             DepartmentServiceClientProperties properties) {
+        Assert.hasText(properties.getBaseUrl(), "services.department.base-url must be configured");
         this.restClient = restClientBuilder
+                .baseUrl(properties.getBaseUrl())
                 .requestFactory(createRequestFactory(properties))
                 .build();
         this.properties = properties;
@@ -39,17 +43,6 @@ public class DepartmentClient {
             return;
         }
         findDepartmentByReference(departmentReference);
-    }
-
-    public DepartmentResponse getDepartmentById(Long departmentId) {
-        return fetchDepartmentById(departmentId);
-    }
-
-    public DepartmentResponse getDepartment(Long departmentId) {
-        return restClient.get()
-                .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments/{id}", departmentId)
-                .retrieve()
-                .body(DepartmentResponse.class);
     }
 
     public DepartmentResponse findDepartmentByReference(String departmentReference) {
@@ -72,7 +65,7 @@ public class DepartmentClient {
     private DepartmentResponse fetchDepartmentById(Long departmentId) {
         try {
             return restClient.get()
-                    .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments/{id}", departmentId)
+                    .uri(DEPARTMENT_BY_ID_PATH, departmentId)
                     .retrieve()
                     .body(DepartmentResponse.class);
         } catch (ResourceAccessException ex) {
@@ -100,7 +93,7 @@ public class DepartmentClient {
     private List<DepartmentResponse> fetchDepartmentsFromApi() {
         try {
             List<DepartmentResponse> departments = restClient.get()
-                    .uri(DEPARTMENT_SERVICE_BASE_URI + "/api/departments")
+                    .uri(DEPARTMENTS_PATH)
                     .retrieve()
                     .body(DEPARTMENT_LIST_TYPE);
             if (departments == null) {
