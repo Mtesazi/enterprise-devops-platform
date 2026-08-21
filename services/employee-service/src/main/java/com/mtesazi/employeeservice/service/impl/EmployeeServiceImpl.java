@@ -79,7 +79,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getEmail(),
-                department != null ? department.id() : null,
+                resolveDepartmentId(employee.getDepartment(), department),
                 department
         );
     }
@@ -100,5 +100,20 @@ public class EmployeeServiceImpl implements EmployeeService {
             return null;
         }
         return departmentLookupService.findDepartmentByReference(departmentReference);
+    }
+
+    /**
+     * Prefers the id reported by the department service, falling back to the employee's own
+     * numeric reference. That keeps {@code departmentId} populated when the department
+     * service is degraded and the lookup returns the circuit-breaker fallback payload.
+     */
+    private Long resolveDepartmentId(String departmentReference, DepartmentResponse department) {
+        if (department != null && department.id() != null) {
+            return department.id();
+        }
+        if (departmentReference != null && departmentReference.matches("\\d+")) {
+            return Long.parseLong(departmentReference);
+        }
+        return null;
     }
 }

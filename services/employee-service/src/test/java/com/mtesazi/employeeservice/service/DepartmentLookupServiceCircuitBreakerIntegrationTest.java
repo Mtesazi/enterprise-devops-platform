@@ -1,7 +1,9 @@
 package com.mtesazi.employeeservice.service;
 
 import com.mtesazi.employeeservice.client.DepartmentClient;
+import com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException;
 import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,5 +78,26 @@ class DepartmentLookupServiceCircuitBreakerIntegrationTest {
         );
 
         assertEquals("Department service circuit breaker is open", exception.getMessage());
+    }
+
+    @Test
+    void unknownDepartmentReferencesDoNotOpenTheCircuitBreaker() {
+        // Rejecting bad input is not a department-service outage, so these calls must be
+        // ignored by the breaker (see resilience4j.circuitbreaker...ignore-exceptions).
+        doThrow(new DepartmentReferenceNotFoundException("Department 'NOPE' does not exist"))
+                .when(departmentClient)
+                .validateDepartmentExists("NOPE");
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            assertThrows(
+                    DepartmentReferenceNotFoundException.class,
+                    () -> departmentLookupService.validateDepartmentExists("NOPE")
+            );
+        }
+
+        assertEquals(
+                CircuitBreaker.State.CLOSED,
+                circuitBreakerRegistry.circuitBreaker("departmentService").getState()
+        );
     }
 }
