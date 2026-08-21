@@ -13,8 +13,14 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "services.department")
 public class DepartmentServiceClientProperties {
 
-    private String baseUrl;
-    private Duration connectTimeout;
-    private Duration readTimeout;
+    /**
+     * Logical Eureka service id of the department service. Kept as a service id (not a
+     * host:port) so that the load-balanced RestClient resolves it through discovery.
+     */
+    private String baseUrl = "http://department-service";
+
+    private Duration connectTimeout = Duration.ofSeconds(2);
+
+    private Duration readTimeout = Duration.ofSeconds(3);
 
 }

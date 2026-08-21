@@ -62,7 +62,7 @@ services:
       - "8761:8761"
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
-      EUREKA_CLIENT_SERVICE_URL: http://discovery-server:8761/eureka
+      EUREKA_SERVER_DEFAULT_ZONE: http://discovery-server:8761/eureka
     depends_on:
       config-server:
         condition: service_started

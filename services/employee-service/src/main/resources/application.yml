@@ -6,6 +6,11 @@ spring:
       enabled: ${SPRING_CLOUD_CONFIG_ENABLED:false}
       import-check:
         enabled: false
+  kafka:
+    # docker-compose already passes KAFKA_BOOTSTRAP_SERVERS; without this the producer
+    # silently falls back to localhost:9092 and POST /api/employees blocks on
+    # metadata lookup (max.block.ms) after the employee has already been committed.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/employee_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -31,10 +36,23 @@ services:
     connect-timeout: 2s
     read-timeout: 3s
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents,retries,retryevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
 resilience4j:
   circuitbreaker:
     instances:
       departmentService:
+        register-health-indicator: true
         sliding-window-type: COUNT_BASED
         sliding-window-size: 10
         minimum-number-of-calls: 5
@@ -42,11 +60,18 @@ resilience4j:
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
+        # An unknown department is a caller error, not a department-service outage:
+        # counting it as a failure would let bad input trip the breaker for everyone.
+        ignore-exceptions:
+          - com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException
   retry:
     instances:
       departmentService:
-        max-attempts: 2
+        max-attempts: 3
         wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        # Allow-list: an unknown department or an unexpected 4xx is never retried.
         retry-exceptions:
           - com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException
           - com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException
