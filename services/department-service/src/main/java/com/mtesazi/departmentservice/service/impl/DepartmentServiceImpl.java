@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +45,12 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public DepartmentResponse getDepartmentByReference(String reference) {
+        return departmentMapper.toResponse(findDepartmentByReferenceOrThrow(reference));
+    }
+
+    @Override
     public DepartmentResponse updateDepartment(Long id, DepartmentRequest request) {
         Department department = findDepartmentOrThrow(id);
         departmentMapper.applyRequestToEntity(request, department);
@@ -60,5 +67,23 @@ public class DepartmentServiceImpl implements DepartmentService {
     private Department findDepartmentOrThrow(Long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new DepartmentNotFoundException("Department " + id + " not found"));
+    }
+
+    private Department findDepartmentByReferenceOrThrow(String reference) {
+        if (reference == null || reference.isBlank()) {
+            throw new DepartmentNotFoundException("Department reference must not be blank");
+        }
+
+        if (reference.matches("\\d+")) {
+            return findDepartmentOrThrow(Long.parseLong(reference));
+        }
+
+        Optional<Department> byCode = departmentRepository.findByCodeIgnoreCase(reference);
+        if (byCode.isPresent()) {
+            return byCode.get();
+        }
+
+        return departmentRepository.findByNameIgnoreCase(reference)
+                .orElseThrow(() -> new DepartmentNotFoundException("Department " + reference + " not found"));
     }
 }
