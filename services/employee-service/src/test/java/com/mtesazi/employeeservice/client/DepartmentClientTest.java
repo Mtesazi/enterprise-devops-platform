@@ -34,8 +34,6 @@ class DepartmentClientTest {
 
     private static final String DEPARTMENT_JSON =
             "{\"id\":1,\"name\":\"Engineering\",\"code\":\"ENG\",\"description\":\"Engineering department\"}";
-    private static final String DEPARTMENT_LIST_JSON = "[" + DEPARTMENT_JSON + "]";
-
     private HttpServer server;
     private int port;
 
@@ -67,7 +65,7 @@ class DepartmentClientTest {
 
     @Test
     void returnsDepartmentWhenReferenceIsACode() {
-        stub("/api/departments", json(200, DEPARTMENT_LIST_JSON));
+        stub("/api/departments/reference/eng", json(200, DEPARTMENT_JSON));
 
         DepartmentResponse department = clientForServer().findDepartmentByReference("eng");
 
@@ -80,7 +78,7 @@ class DepartmentClientTest {
         AtomicInteger requestCount = new AtomicInteger();
         stub("/api/departments", exchange -> {
             requestCount.incrementAndGet();
-            json(200, DEPARTMENT_LIST_JSON).handle(exchange);
+            json(200, DEPARTMENT_JSON).handle(exchange);
         });
 
         DepartmentClient client = clientForServer();
@@ -113,7 +111,7 @@ class DepartmentClientTest {
 
     @Test
     void throwsDepartmentReferenceNotFoundWhenCodeIsNotInTheDepartmentList() {
-        stub("/api/departments", json(200, DEPARTMENT_LIST_JSON));
+        stub("/api/departments/reference/SALES", status(404));
 
         DepartmentClient client = clientForServer();
 
@@ -155,7 +153,7 @@ class DepartmentClientTest {
 
     @Test
     void translatesServerErrorsOnTheDepartmentListIntoCommunicationFailures() {
-        stub("/api/departments", status(503));
+        stub("/api/departments/reference/ENG", status(503));
 
         DepartmentClient client = clientForServer();
 
@@ -167,14 +165,12 @@ class DepartmentClientTest {
 
     @Test
     void translatesMissingDepartmentListEndpointIntoCommunicationFailure() {
-        // A 404 on the collection endpoint means the endpoint is gone, not that a
-        // particular department is unknown.
-        stub("/api/departments", status(404));
+        stub("/api/departments/reference/ENG", status(404));
 
         DepartmentClient client = clientForServer();
 
         assertThrows(
-                DepartmentServiceCommunicationException.class,
+                DepartmentReferenceNotFoundException.class,
                 () -> client.findDepartmentByReference("ENG")
         );
     }
@@ -212,7 +208,7 @@ class DepartmentClientTest {
 
     @Test
     void translatesAnEmptyResponseBodyIntoCommunicationFailure() {
-        stub("/api/departments/1", exchange -> {
+        stub("/api/departments/reference/1", exchange -> {
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, -1);
             exchange.close();
@@ -221,7 +217,7 @@ class DepartmentClientTest {
         DepartmentClient client = clientForServer();
 
         assertThrows(
-                DepartmentServiceCommunicationException.class,
+                DepartmentReferenceNotFoundException.class,
                 () -> client.findDepartmentByReference("1")
         );
     }

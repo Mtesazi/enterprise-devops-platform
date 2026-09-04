@@ -7,7 +7,6 @@ import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationExcep
 import com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -35,8 +34,6 @@ public class DepartmentClient {
 
     private static final String DEPARTMENTS_PATH = "/api/departments";
     private static final String DEPARTMENT_BY_ID_PATH = DEPARTMENTS_PATH + "/{id}";
-    private static final ParameterizedTypeReference<List<DepartmentResponse>> DEPARTMENT_LIST_TYPE =
-            new ParameterizedTypeReference<>() {};
 
     /**
      * Messages used by {@code BlockingLoadBalancerClient} when discovery yields no instance
@@ -91,12 +88,7 @@ public class DepartmentClient {
             return fetchDepartmentById(Long.parseLong(departmentReference));
         }
 
-        return fetchDepartments().stream()
-                .filter(department -> departmentReference.equalsIgnoreCase(department.code())
-                        || departmentReference.equalsIgnoreCase(department.name()))
-                .findFirst()
-                .orElseThrow(() -> new DepartmentReferenceNotFoundException(
-                        "Department '" + departmentReference + "' does not exist"));
+        return fetchDepartmentByReference(departmentReference);
     }
 
     private DepartmentResponse fetchDepartmentById(Long departmentId) {
@@ -118,29 +110,28 @@ public class DepartmentClient {
         return department;
     }
 
-    private List<DepartmentResponse> fetchDepartments() {
-        log.debug("Listing departments via service discovery at {}", properties.getBaseUrl());
-        // A 404 on the collection endpoint means the endpoint itself is missing, so it is
-        // treated as a communication failure rather than an unknown department.
-        List<DepartmentResponse> departments = execute(
+    private DepartmentResponse fetchDepartmentByReference(String departmentReference) {
+        log.debug("Resolving department {} via service discovery at {}", departmentReference, properties.getBaseUrl());
+        DepartmentResponse department = execute(
                 () -> restClient.get()
-                        .uri(DEPARTMENTS_PATH)
+                        .uri(DEPARTMENTS_PATH + "/reference/{reference}", departmentReference)
                         .retrieve()
-                        .body(DEPARTMENT_LIST_TYPE),
-                null
+                        .body(DepartmentResponse.class),
+                () -> new DepartmentReferenceNotFoundException(
+                        "Department '" + departmentReference + "' does not exist")
         );
-        if (departments == null) {
-            throw new DepartmentServiceCommunicationException("Department service returned an empty response body");
+        if (department == null) {
+            throw new DepartmentServiceCommunicationException(
+                    "Department service returned an empty body for department " + departmentReference);
         }
-        return departments;
+        return department;
     }
 
     /**
      * Runs {@code call}, translating every failure mode of a load-balanced call into a
      * department-service exception.
      *
-     * @param notFoundTranslation how to translate an HTTP 404, or {@code null} to treat it
-     *                            like any other unexpected status
+     * @param notFoundTranslation how to translate an HTTP 404 into a domain exception
      */
     private <T> T execute(Supplier<T> call, Supplier<RuntimeException> notFoundTranslation) {
         try {

@@ -51,6 +51,13 @@ public class DepartmentController {
         return ResponseEntity.ok(departmentService.getDepartmentById(id));
     }
 
+    @GetMapping("/reference/{reference}")
+    public ResponseEntity<DepartmentResponse> getDepartmentByReference(
+            @Parameter(description = "Department reference", example = "ENG")
+            @PathVariable("reference") String reference) {
+        return ResponseEntity.ok(departmentService.getDepartmentByReference(reference));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<DepartmentResponse> updateDepartment(
             @Parameter(description = "Department ID", example = "1")
