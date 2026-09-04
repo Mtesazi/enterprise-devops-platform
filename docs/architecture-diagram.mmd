@@ -1,0 +1,30 @@
+flowchart LR
+  U[Client / Browser / Postman] --> G[API Gateway]
+
+  G --> A[Auth Service]
+  G --> E[Employee Service]
+  G --> D[Department Service]
+  G --> N[Notification Service]
+  G --> AU[Audit Service]
+
+  G <--> L[Spring Cloud LoadBalancer]
+  L <--> EU[Eureka Discovery Server]
+
+  C[Config Server] --> A
+  C --> E
+  C --> D
+  C --> G
+  C --> N
+  C --> AU
+  C --> EU
+
+  A --> P1[(PostgreSQL auth_db)]
+  E --> P2[(PostgreSQL employee_db)]
+  D --> P3[(PostgreSQL department_db)]
+  N --> P4[(PostgreSQL notification_db)]
+  AU --> P5[(PostgreSQL audit_db)]
+
+  E -- "RestClient / department-service" --> D
+  E --> K[(Kafka)]
+  K --> N
+  K --> AU
