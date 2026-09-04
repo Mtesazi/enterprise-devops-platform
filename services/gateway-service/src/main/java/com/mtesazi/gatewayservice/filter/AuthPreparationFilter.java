@@ -38,6 +38,7 @@ public class AuthPreparationFilter implements GlobalFilter, Ordered {
     );
     private static final List<String> ROLE_RESTRICTED_PATTERNS = List.of(
             "/api/v1/employees/**",
+            "/api/employees/**",
             "/api/v1/departments/**"
     );
 
@@ -86,7 +87,13 @@ public class AuthPreparationFilter implements GlobalFilter, Ordered {
                 return true;
             }
         }
-        return false;
+        return "/login".equals(requestPath)
+                || "/register".equals(requestPath)
+                || "/refresh".equals(requestPath)
+                || "/me".equals(requestPath)
+                || "/api/auth/login".equals(requestPath)
+                || "/api/auth/register".equals(requestPath)
+                || "/api/auth/refresh".equals(requestPath);
     }
 
     private boolean hasRequiredRole(ServerWebExchange exchange, Claims claims) {

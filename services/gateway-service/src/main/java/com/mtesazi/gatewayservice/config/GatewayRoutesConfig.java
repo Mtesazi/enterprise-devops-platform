@@ -12,13 +12,13 @@ public class GatewayRoutesConfig {
     public RouteLocator serviceRoutes(RouteLocatorBuilder builder, GatewayServicesProperties properties) {
         return builder.routes()
                 .route("auth-service-login-route", r -> r
-                        .path("/login", "/register", "/refresh")
+                        .path("/login", "/register", "/refresh", "/me")
                         .uri(properties.getAuth().getBaseUrl()))
                 .route("auth-service-route", r -> r
                         .path("/api/auth/**")
                         .uri(properties.getAuth().getBaseUrl()))
                 .route("employee-service-route", r -> r
-                        .path("/api/v1/employees/**")
+                        .path("/api/v1/employees/**", "/api/employees/**")
                         .uri(properties.getEmployee().getBaseUrl()))
                 .route("department-service-route", r -> r
                         .path("/api/v1/departments/**", "/api/departments/**")
