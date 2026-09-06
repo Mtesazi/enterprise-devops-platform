@@ -9,14 +9,6 @@ spring:
   config:
     import: optional:${CONFIG_IMPORT:}
 
-services:
-  auth:
-    base-url: ${SERVICES_AUTH_BASE_URL:http://localhost:8083}
-  employee:
-    base-url: ${SERVICES_EMPLOYEE_BASE_URL:http://localhost:8081}
-  department:
-    base-url: ${SERVICES_DEPARTMENT_BASE_URL:http://localhost:8082}
-
 server:
   port: ${SERVER_PORT:8080}
 
