@@ -9,20 +9,20 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayRoutesConfig {
 
     @Bean
-    public RouteLocator serviceRoutes(RouteLocatorBuilder builder, GatewayServicesProperties properties) {
+    public RouteLocator serviceRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("auth-service-login-route", r -> r
                         .path("/login", "/register", "/refresh", "/me")
-                        .uri(properties.getAuth().getBaseUrl()))
+                        .uri("lb://auth-service"))
                 .route("auth-service-route", r -> r
                         .path("/api/auth/**")
-                        .uri(properties.getAuth().getBaseUrl()))
+                        .uri("lb://auth-service"))
                 .route("employee-service-route", r -> r
                         .path("/api/v1/employees/**", "/api/employees/**")
-                        .uri(properties.getEmployee().getBaseUrl()))
+                        .uri("lb://employee-service"))
                 .route("department-service-route", r -> r
                         .path("/api/v1/departments/**", "/api/departments/**")
-                        .uri(properties.getDepartment().getBaseUrl()))
+                        .uri("lb://department-service"))
                 .build();
     }
 }
