@@ -7,7 +7,6 @@ import com.mtesazi.departmentservice.exception.DepartmentNotFoundException;
 import com.mtesazi.departmentservice.mapper.DepartmentMapper;
 import com.mtesazi.departmentservice.repository.DepartmentRepository;
 import com.mtesazi.departmentservice.service.DepartmentService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,12 +14,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
+
+    public DepartmentServiceImpl(DepartmentRepository departmentRepository, DepartmentMapper departmentMapper) {
+        this.departmentRepository = departmentRepository;
+        this.departmentMapper = departmentMapper;
+    }
 
     @Override
     public DepartmentResponse createDepartment(DepartmentRequest request) {
