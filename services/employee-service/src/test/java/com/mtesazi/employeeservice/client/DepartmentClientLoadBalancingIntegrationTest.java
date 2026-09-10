@@ -57,7 +57,9 @@ class DepartmentClientLoadBalancingIntegrationTest {
 
     static {
         stoppedPort = reserveFreePort();
-        healthyPort = reserveFreePort();
+        do {
+            healthyPort = reserveFreePort();
+        } while (healthyPort == stoppedPort);
         System.setProperty("test.stopped-port", Integer.toString(stoppedPort));
         System.setProperty("test.healthy-port", Integer.toString(healthyPort));
     }
@@ -73,7 +75,7 @@ class DepartmentClientLoadBalancingIntegrationTest {
         healthyServer = HttpServer.create(new InetSocketAddress(healthyPort), 0);
         healthyServer.createContext("/api/departments", exchange -> {
             HEALTHY_REQUEST_COUNT.incrementAndGet();
-            byte[] body = "[{\"id\":10,\"name\":\"Engineering\",\"code\":\"ENG\"}]".getBytes(StandardCharsets.UTF_8);
+            byte[] body = "{\"id\":10,\"name\":\"Engineering\",\"code\":\"ENG\"}".getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, body.length);
             try (OutputStream outputStream = exchange.getResponseBody()) {

@@ -29,7 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
                 "resilience4j.circuitbreaker.instances.departmentService.sliding-window-size=2",
                 "resilience4j.circuitbreaker.instances.departmentService.minimum-number-of-calls=2",
                 "resilience4j.circuitbreaker.instances.departmentService.failure-rate-threshold=50",
-                "resilience4j.circuitbreaker.instances.departmentService.wait-duration-in-open-state=1s"
+                "resilience4j.circuitbreaker.instances.departmentService.wait-duration-in-open-state=1s",
+                "resilience4j.circuitbreaker.instances.departmentService.ignore-exceptions=com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException",
+                "resilience4j.retry.instances.departmentService.ignore-exceptions=com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException"
         }
 )
 class DepartmentLookupServiceCircuitBreakerIntegrationTest {

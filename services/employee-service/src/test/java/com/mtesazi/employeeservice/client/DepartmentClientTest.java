@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /**
  * Exercises {@link DepartmentClient} against a real HTTP server so that transport-level
@@ -235,7 +237,7 @@ class DepartmentClientTest {
     }
 
     private DepartmentClient client(DepartmentServiceClientProperties properties) {
-        return new DepartmentClient(RestClient.builder(), properties);
+        return new DepartmentClient(RestClient.builder(), mock(DiscoveryClient.class), properties);
     }
 
     private DepartmentServiceClientProperties properties(String baseUrl,

@@ -8,3 +8,6 @@ spring:
       enabled: ${SPRING_CLOUD_CONFIG_ENABLED:true}
       import-check:
         enabled: false
+    loadbalancer:
+      retry:
+        enabled: true
