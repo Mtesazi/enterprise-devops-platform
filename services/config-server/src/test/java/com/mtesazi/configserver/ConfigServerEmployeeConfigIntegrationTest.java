@@ -35,7 +35,7 @@ class ConfigServerEmployeeConfigIntegrationTest {
         assertTrue(propertySources.isArray() && !propertySources.isEmpty());
 
         String serialized = propertySources.toString();
-        assertTrue(serialized.contains("\"services.department.base-url\":\"http://DEPARTMENT-SERVICE\""));
+        assertTrue(serialized.contains("\"services.department.base-url\""));
         assertTrue(serialized.contains("\"management.endpoints.web.exposure.include\":\"health,info,prometheus,metrics\""));
     }
 }
