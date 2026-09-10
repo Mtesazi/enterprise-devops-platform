@@ -7,9 +7,7 @@ spring:
     config:
       server:
         native:
-          search-locations:
-            - classpath:/config
-            - file:///home/bam/enterprise-config-repo
+          search-locations: classpath:/config
 
 server:
   port: 8888

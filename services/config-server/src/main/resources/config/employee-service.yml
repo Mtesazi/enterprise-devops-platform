@@ -1,0 +1,74 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/employee_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+
+services:
+  department:
+    base-url: ${SERVICES_DEPARTMENT_BASE_URL:http://localhost:8082}
+    connect-timeout: 2s
+    read-timeout: 3s
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      departmentService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 3
+        ignore-exceptions:
+          - com.mtesazi.employeeservice.exception.EmployeeNotFoundException
+          - com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException
+  retry:
+    instances:
+      departmentService:
+        max-attempts: 3
+        wait-duration: 2s
+        ignore-exceptions:
+          - com.mtesazi.employeeservice.exception.EmployeeNotFoundException
+          - com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException
+  timelimiter:
+    instances:
+      departmentService:
+        timeout-duration: 5s
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

@@ -1,0 +1,240 @@
+package com.mtesazi.employeeservice.service.impl;
+
+import com.mtesazi.employeeservice.client.dto.DepartmentResponse;
+import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
+import com.mtesazi.employeeservice.dto.EmployeeRequest;
+import com.mtesazi.employeeservice.dto.EmployeeResponse;
+import com.mtesazi.employeeservice.entity.Employee;
+import com.mtesazi.employeeservice.exception.DepartmentReferenceNotFoundException;
+import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationException;
+import com.mtesazi.employeeservice.exception.EmployeeNotFoundException;
+import com.mtesazi.employeeservice.mapper.EmployeeMapper;
+import com.mtesazi.employeeservice.repository.EmployeeRepository;
+import com.mtesazi.employeeservice.service.DepartmentLookupService;
+import com.mtesazi.sharedlibrary.kafka.EmployeeCreatedEvent;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeRepository employeeRepository;
+
+    @Mock
+    private EmployeeMapper employeeMapper;
+
+    @Mock
+    private DepartmentLookupService departmentLookupService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    @Test
+    void getEmployeeDetailsCombinesEmployeeAndDepartmentResponses() {
+        Employee employee = new Employee(
+                1L,
+                "Jane",
+                "Doe",
+                "jane.doe@example.com",
+                "ENG",
+                BigDecimal.valueOf(125000),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        DepartmentResponse department = new DepartmentResponse(10L, "Engineering", "ENG", "Engineering department");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(department);
+
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
+
+        assertEquals(1L, response.id());
+        assertEquals("Jane", response.firstName());
+        assertEquals("Doe", response.lastName());
+        assertEquals("jane.doe@example.com", response.email());
+        assertEquals(10L, response.departmentId());
+        assertEquals(department, response.department());
+        verify(departmentLookupService).findDepartmentByReference("ENG");
+    }
+
+    @Test
+    void getEmployeeDetailsReturnsControlledDepartmentFallback() {
+        Employee employee = new Employee(
+                1L,
+                "Bongani",
+                "Gumede",
+                "bongani.gumede@example.com",
+                "ENG",
+                BigDecimal.valueOf(125000),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        DepartmentResponse fallbackDepartment = new DepartmentResponse(null, "Department Service Unavailable", "N/A", "Service unavailable");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(departmentLookupService.findDepartmentByReference("ENG")).thenReturn(fallbackDepartment);
+
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
+
+        assertEquals(1L, response.id());
+        assertEquals("Bongani", response.firstName());
+        assertEquals("Gumede", response.lastName());
+        assertEquals("bongani.gumede@example.com", response.email());
+        assertEquals(null, response.departmentId());
+        assertEquals(fallbackDepartment, response.department());
+    }
+
+    @Test
+    void getEmployeeDetailsKeepsTheDepartmentIdWhenTheDepartmentServiceIsDegraded() {
+        Employee employee = employee("1");
+        DepartmentResponse fallbackDepartment =
+                new DepartmentResponse(null, "Department Service Unavailable", "N/A", "Service unavailable");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(departmentLookupService.findDepartmentByReference("1")).thenReturn(fallbackDepartment);
+
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
+
+        assertEquals(1L, response.departmentId());
+        assertEquals(fallbackDepartment, response.department());
+    }
+
+    @Test
+    void getEmployeeDetailsSkipsTheLookupWhenTheEmployeeHasNoDepartment() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee(null)));
+
+        EmployeeDetailsResponse response = employeeService.getEmployeeDetails(1L);
+
+        assertNull(response.department());
+        assertNull(response.departmentId());
+        verify(departmentLookupService, never()).findDepartmentByReference(anyString());
+    }
+
+    @Test
+    void createEmployeeValidatesTheDepartmentBeforeSaving() {
+        EmployeeRequest request = request("1");
+        Employee entity = employee("1");
+
+        when(employeeMapper.toEntity(request)).thenReturn(entity);
+        when(employeeRepository.save(entity)).thenReturn(entity);
+        when(employeeMapper.toResponse(entity)).thenReturn(new EmployeeResponse());
+
+        employeeService.createEmployee(request);
+
+        InOrder inOrder = inOrder(departmentLookupService, employeeRepository);
+        inOrder.verify(departmentLookupService).validateDepartmentExists("1");
+        inOrder.verify(employeeRepository).save(entity);
+        verify(applicationEventPublisher).publishEvent(any(EmployeeCreatedEvent.class));
+    }
+
+    @Test
+    void createEmployeeIsRejectedWhenTheDepartmentDoesNotExist() {
+        EmployeeRequest request = request("999");
+
+        doThrow(new DepartmentReferenceNotFoundException("Department '999' does not exist"))
+                .when(departmentLookupService)
+                .validateDepartmentExists("999");
+
+        DepartmentReferenceNotFoundException exception = assertThrows(
+                DepartmentReferenceNotFoundException.class,
+                () -> employeeService.createEmployee(request)
+        );
+
+        assertEquals("Department '999' does not exist", exception.getMessage());
+        verify(employeeRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void createEmployeeIsRejectedWhenTheDepartmentServiceIsUnavailable() {
+        EmployeeRequest request = request("1");
+
+        doThrow(new DepartmentServiceCommunicationException("Could not reach department service"))
+                .when(departmentLookupService)
+                .validateDepartmentExists("1");
+
+        assertThrows(
+                DepartmentServiceCommunicationException.class,
+                () -> employeeService.createEmployee(request)
+        );
+
+        verify(employeeRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void updateEmployeeIsRejectedWhenTheDepartmentDoesNotExist() {
+        EmployeeRequest request = request("999");
+
+        doThrow(new DepartmentReferenceNotFoundException("Department '999' does not exist"))
+                .when(departmentLookupService)
+                .validateDepartmentExists("999");
+
+        assertThrows(
+                DepartmentReferenceNotFoundException.class,
+                () -> employeeService.updateEmployee(1L, request)
+        );
+
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void getEmployeeDetailsThrowsWhenEmployeeDoesNotExist() {
+        when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
+
+        EmployeeNotFoundException exception = assertThrows(
+                EmployeeNotFoundException.class,
+                () -> employeeService.getEmployeeDetails(99L)
+        );
+
+        assertEquals("Employee 99 not found", exception.getMessage());
+        verify(departmentLookupService, never()).findDepartmentByReference(anyString());
+    }
+
+    private Employee employee(String departmentReference) {
+        return new Employee(
+                1L,
+                "Jane",
+                "Doe",
+                "jane.doe@example.com",
+                departmentReference,
+                BigDecimal.valueOf(125000),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+    }
+
+    private EmployeeRequest request(String departmentReference) {
+        EmployeeRequest request = new EmployeeRequest();
+        request.setFirstName("John");
+        request.setLastName("Doe");
+        request.setEmail("john@example.com");
+        request.setDepartment(departmentReference);
+        request.setSalary(BigDecimal.valueOf(50000));
+        return request;
+    }
+}

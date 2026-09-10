@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/departments")
+@RequestMapping({"/api/v1/departments", "/api/departments"})
 @RequiredArgsConstructor
 public class DepartmentController {
 
@@ -49,6 +49,13 @@ public class DepartmentController {
             @Parameter(description = "Department ID", example = "1")
             @PathVariable("id") Long id) {
         return ResponseEntity.ok(departmentService.getDepartmentById(id));
+    }
+
+    @GetMapping("/reference/{reference}")
+    public ResponseEntity<DepartmentResponse> getDepartmentByReference(
+            @Parameter(description = "Department reference", example = "ENG")
+            @PathVariable("reference") String reference) {
+        return ResponseEntity.ok(departmentService.getDepartmentByReference(reference));
     }
 
     @PutMapping("/{id}")

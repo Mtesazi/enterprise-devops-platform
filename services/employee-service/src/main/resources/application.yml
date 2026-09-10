@@ -1,10 +1,10 @@
 spring:
- application:
-   name: employee-service
- config:
-   import: optional:configserver:http://localhost:8888
- cloud:
-   config:
-     enabled: true
-     import-check:
-       enabled: false
+  application:
+    name: employee-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  cloud:
+    config:
+      enabled: ${SPRING_CLOUD_CONFIG_ENABLED:true}
+      import-check:
+        enabled: false

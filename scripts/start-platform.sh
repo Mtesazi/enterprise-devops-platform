@@ -45,7 +45,7 @@ stop_by_pattern 'spring-boot|ConfigServerApplication|DiscoveryServerApplication|
 sleep 2
 
 echo "==> Starting infrastructure..."
-docker compose -f "$ROOT_DIR/docker-compose.yml" up -d postgres
+docker compose -f "$ROOT_DIR/docker-compose.yml" up -d postgres zookeeper kafka
 
 start_service() {
   local name="$1"

@@ -1,0 +1,4 @@
+logging:
+  level:
+    com.mtesazi: INFO
+    org.springframework: WARN

@@ -1,6 +1,7 @@
 package com.mtesazi.employeeservice.controller;
 
 import com.mtesazi.employeeservice.dto.DeleteEmployeeResponse;
+import com.mtesazi.employeeservice.dto.EmployeeDetailsResponse;
 import com.mtesazi.employeeservice.dto.EmployeeRequest;
 import com.mtesazi.employeeservice.dto.EmployeeResponse;
 import com.mtesazi.employeeservice.service.EmployeeService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/employees")
+@RequestMapping({"/api/v1/employees", "/api/employees"})
 @RequiredArgsConstructor
 public class EmployeeController {
 
@@ -41,6 +42,25 @@ public class EmployeeController {
             @Parameter(description = "Employee ID", example = "1")
             @PathVariable("id") Long id) {
         return ResponseEntity.ok(employeeService.getEmployeeById(id));
+    }
+
+    @GetMapping("/{id}/details")
+    @Operation(summary = "Get employee details by ID, including department data")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Employee details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeeDetailsResponse.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Employee not found", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid department reference", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Department service unavailable", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Department service timeout", content = @Content)
+    })
+    public ResponseEntity<EmployeeDetailsResponse> getEmployeeDetails(
+            @Parameter(description = "Employee ID", example = "1")
+            @PathVariable("id") Long id) {
+        return ResponseEntity.ok(employeeService.getEmployeeDetails(id));
     }
 
     @PutMapping("/{id}")

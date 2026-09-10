@@ -14,6 +14,8 @@ public interface DepartmentService {
 
     DepartmentResponse getDepartmentById(Long id);
 
+    DepartmentResponse getDepartmentByReference(String reference);
+
     DepartmentResponse updateDepartment(Long id, @Valid DepartmentRequest request);
 
     void deleteDepartment(Long id);
