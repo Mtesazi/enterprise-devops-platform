@@ -78,6 +78,7 @@
         <module>services/payroll-service</module>
         <module>services/notification-service</module>
         <module>services/audit-service</module>
+        <module>services/config-server</module>
         <module>services/gateway-service</module>
         <module>services/discovery-server</module>
         <module>services/shared-library</module>

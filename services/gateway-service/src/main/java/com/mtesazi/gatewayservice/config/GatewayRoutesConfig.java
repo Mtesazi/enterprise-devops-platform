@@ -15,10 +15,12 @@ public class GatewayRoutesConfig {
                         .path("/api/auth/**")
                         .uri(properties.getAuth().getBaseUrl()))
                 .route("employee-service-route", r -> r
-                        .path("/api/v1/employees/**")
+                        .path("/api/employees/**")
+                        .filters(f -> f.rewritePath("/api/employees/(?<segment>.*)", "/api/v1/employees/${segment}"))
                         .uri(properties.getEmployee().getBaseUrl()))
                 .route("department-service-route", r -> r
-                        .path("/api/v1/departments/**")
+                        .path("/api/departments/**")
+                        .filters(f -> f.rewritePath("/api/departments/(?<segment>.*)", "/api/v1/departments/${segment}"))
                         .uri(properties.getDepartment().getBaseUrl()))
                 .build();
     }
