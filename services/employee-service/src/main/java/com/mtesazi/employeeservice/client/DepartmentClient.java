@@ -7,6 +7,9 @@ import com.mtesazi.employeeservice.exception.DepartmentServiceCommunicationExcep
 import com.mtesazi.employeeservice.exception.DepartmentServiceTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -18,6 +21,7 @@ import org.springframework.web.client.RestClient;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -44,18 +48,18 @@ public class DepartmentClient {
     private static final List<String> NO_INSTANCE_MESSAGES =
             List.of("No instances available", "Service Instance cannot be null");
 
-    private final RestClient restClient;
+    private final RestClient.Builder restClientBuilder;
+    private final DiscoveryClient discoveryClient;
     private final DepartmentServiceClientProperties properties;
 
-    public DepartmentClient(RestClient.Builder restClientBuilder,
+    public DepartmentClient(@Qualifier("restClientBuilder") RestClient.Builder restClientBuilder,
+                            DiscoveryClient discoveryClient,
                             DepartmentServiceClientProperties properties) {
         Assert.hasText(properties.getBaseUrl(), "services.department.base-url must be configured");
         Assert.notNull(properties.getConnectTimeout(), "services.department.connect-timeout must be configured");
         Assert.notNull(properties.getReadTimeout(), "services.department.read-timeout must be configured");
-        this.restClient = restClientBuilder
-                .baseUrl(properties.getBaseUrl())
-                .requestFactory(createRequestFactory(properties))
-                .build();
+        this.restClientBuilder = restClientBuilder;
+        this.discoveryClient = discoveryClient;
         this.properties = properties;
     }
 
@@ -94,7 +98,7 @@ public class DepartmentClient {
     private DepartmentResponse fetchDepartmentById(Long departmentId) {
         log.debug("Resolving department {} via service discovery at {}", departmentId, properties.getBaseUrl());
         DepartmentResponse department = execute(
-                () -> restClient.get()
+                client -> client.get()
                         .uri(DEPARTMENT_BY_ID_PATH, departmentId)
                         .retrieve()
                         .body(DepartmentResponse.class),
@@ -113,7 +117,7 @@ public class DepartmentClient {
     private DepartmentResponse fetchDepartmentByReference(String departmentReference) {
         log.debug("Resolving department {} via service discovery at {}", departmentReference, properties.getBaseUrl());
         DepartmentResponse department = execute(
-                () -> restClient.get()
+                client -> client.get()
                         .uri(DEPARTMENTS_PATH + "/reference/{reference}", departmentReference)
                         .retrieve()
                         .body(DepartmentResponse.class),
@@ -133,31 +137,85 @@ public class DepartmentClient {
      *
      * @param notFoundTranslation how to translate an HTTP 404 into a domain exception
      */
-    private <T> T execute(Supplier<T> call, Supplier<RuntimeException> notFoundTranslation) {
-        try {
-            return call.get();
-        } catch (ResourceAccessException ex) {
-            if (containsCause(ex, SocketTimeoutException.class)) {
-                Duration readTimeout = properties.getReadTimeout();
-                throw new DepartmentServiceTimeoutException(
-                        "Department service timed out after " + readTimeout.toMillis() + "ms", ex);
-            }
-            throw new DepartmentServiceCommunicationException("Could not reach department service", ex);
-        } catch (HttpStatusCodeException ex) {
-            if (notFoundTranslation != null && ex.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
-                throw notFoundTranslation.get();
-            }
-            throw new DepartmentServiceCommunicationException(
-                    "Department service request failed with status " + ex.getStatusCode(), ex);
-        } catch (IllegalStateException | IllegalArgumentException ex) {
-            // Spring Cloud LoadBalancer found no live instance for the logical service id,
-            // e.g. the department service has not registered with Eureka (yet).
-            if (isNoInstanceAvailable(ex)) {
+    private <T> T execute(Function<RestClient, T> call, Supplier<RuntimeException> notFoundTranslation) {
+        if (!isServiceDiscoveryUrl(properties.getBaseUrl())) {
+            try {
+                return executeOnClient(call, properties.getBaseUrl());
+            } catch (ResourceAccessException ex) {
+                if (containsCause(ex, SocketTimeoutException.class)) {
+                    throw new DepartmentServiceTimeoutException(
+                            "Department service timed out after " + properties.getReadTimeout().toMillis() + "ms", ex);
+                }
+                throw new DepartmentServiceCommunicationException("Could not reach department service", ex);
+            } catch (HttpStatusCodeException ex) {
+                if (notFoundTranslation != null && ex.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
+                    throw notFoundTranslation.get();
+                }
                 throw new DepartmentServiceCommunicationException(
-                        "No department service instance is available from service discovery", ex);
+                        "Department service request failed with status " + ex.getStatusCode(), ex);
+            } catch (IllegalStateException | IllegalArgumentException ex) {
+                if (isNoInstanceAvailable(ex)) {
+                    throw new DepartmentServiceCommunicationException(
+                            "No department service instance is available from service discovery", ex);
+                }
+                throw ex;
             }
-            throw ex;
         }
+
+        String serviceId = serviceId(properties.getBaseUrl());
+        List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
+        if (instances.isEmpty()) {
+            throw new DepartmentServiceCommunicationException(
+                    "No department service instance is available from service discovery");
+        }
+
+        RuntimeException lastFailure = null;
+        for (ServiceInstance instance : instances) {
+            try {
+                return executeOnClient(call, instance.getUri().toString());
+            } catch (ResourceAccessException ex) {
+                if (containsCause(ex, SocketTimeoutException.class)) {
+                    lastFailure = new DepartmentServiceTimeoutException(
+                            "Department service timed out after " + properties.getReadTimeout().toMillis() + "ms", ex);
+                    continue;
+                }
+                lastFailure = new DepartmentServiceCommunicationException("Could not reach department service", ex);
+            } catch (HttpStatusCodeException ex) {
+                if (notFoundTranslation != null && ex.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
+                    throw notFoundTranslation.get();
+                }
+                lastFailure = new DepartmentServiceCommunicationException(
+                        "Department service request failed with status " + ex.getStatusCode(), ex);
+            } catch (IllegalStateException | IllegalArgumentException ex) {
+                if (isNoInstanceAvailable(ex)) {
+                    lastFailure = new DepartmentServiceCommunicationException(
+                            "No department service instance is available from service discovery", ex);
+                    continue;
+                }
+                lastFailure = ex instanceof RuntimeException runtimeException ? runtimeException : new IllegalStateException(ex);
+            }
+        }
+
+        if (lastFailure != null) {
+            throw lastFailure;
+        }
+        throw new DepartmentServiceCommunicationException("Department service request failed");
+    }
+
+    private <T> T executeOnClient(Function<RestClient, T> call, String baseUrl) {
+        RestClient client = restClientBuilder
+                .baseUrl(baseUrl)
+                .requestFactory(createRequestFactory(properties))
+                .build();
+        return call.apply(client);
+    }
+
+    private boolean isServiceDiscoveryUrl(String baseUrl) {
+        return baseUrl != null && baseUrl.contains("//") && !baseUrl.matches("^https?://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|\\[::1\\])(?::\\d+)?(/.*)?$");
+    }
+
+    private String serviceId(String baseUrl) {
+        return baseUrl.replaceFirst("^https?://", "").replaceFirst("/.*$", "");
     }
 
     private boolean isNoInstanceAvailable(RuntimeException ex) {

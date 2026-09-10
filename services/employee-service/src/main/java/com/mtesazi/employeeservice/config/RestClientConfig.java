@@ -2,10 +2,12 @@ package com.mtesazi.employeeservice.config;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.client.RestClient;
 
@@ -26,11 +28,19 @@ public class RestClientConfig {
      * are not lost by replacing it.
      */
     @Bean
-    @LoadBalanced
+    @Primary
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    RestClient.Builder loadBalancedRestClientBuilder(ObjectProvider<RestClientCustomizer> customizers) {
+    @ConditionalOnMissingBean(name = "restClientBuilder")
+    RestClient.Builder restClientBuilder(ObjectProvider<RestClientCustomizer> customizers) {
         RestClient.Builder builder = RestClient.builder();
         customizers.orderedStream().forEach(customizer -> customizer.customize(builder));
         return builder;
+    }
+
+    @Bean("loadBalancedRestClientBuilder")
+    @LoadBalanced
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    RestClient.Builder loadBalancedRestClientBuilder(ObjectProvider<RestClientCustomizer> customizers) {
+        return restClientBuilder(customizers);
     }
 }
