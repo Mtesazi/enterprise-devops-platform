@@ -1,0 +1,229 @@
+global:
+  namespaceOverride: ""
+  imagePullSecrets: []
+  imagePullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  host: platform.local
+  path: /
+  pathType: Prefix
+  tls: []
+
+platform:
+  services:
+    config-server:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/config-server
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8888
+      containerPort: 8888
+      env:
+        SERVER_PORT: "8888"
+        SPRING_PROFILES_ACTIVE: "native"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    discovery-server:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/discovery-server
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8761
+      containerPort: 8761
+      env:
+        SERVER_PORT: "8761"
+        EUREKA_CLIENT_ENABLED: "false"
+        EUREKA_SERVER_DEFAULT_ZONE: "http://discovery-server:8761/eureka"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    gateway-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/gateway-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8080
+      containerPort: 8080
+      env:
+        SERVER_PORT: "8080"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        GATEWAY_AUTH_ENABLED: "true"
+        GATEWAY_JWT_SECRET: "change-me-in-production"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    auth-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/auth-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8083
+      containerPort: 8083
+      env:
+        SERVER_PORT: "8083"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+        SECURITY_JWT_SECRET: "change-me-in-production"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    employee-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/employee-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8081
+      containerPort: 8081
+      env:
+        SERVER_PORT: "8081"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/employee_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+        KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    department-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/department-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8082
+      containerPort: 8082
+      env:
+        SERVER_PORT: "8082"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/department_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    notification-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/notification-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8084
+      containerPort: 8084
+      env:
+        SERVER_PORT: "8084"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/notification_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+        KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    audit-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/audit-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8085
+      containerPort: 8085
+      env:
+        SERVER_PORT: "8085"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/audit_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+        KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
+
+    payroll-service:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: enterprise-devops-platform/payroll-service
+        tag: latest
+      service:
+        type: ClusterIP
+        port: 8086
+      containerPort: 8086
+      env:
+        SERVER_PORT: "8086"
+        CONFIG_SERVER_URL: "http://config-server:8888"
+        SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/payroll_db"
+        SPRING_DATASOURCE_USERNAME: "postgres"
+        SPRING_DATASOURCE_PASSWORD: "password"
+      probes:
+        enabled: true
+        path: /actuator/health
+        readinessInitialDelaySeconds: 20
+        livenessInitialDelaySeconds: 40
+      resources: {}
