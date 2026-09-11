@@ -45,7 +45,9 @@ stop_by_pattern 'spring-boot|ConfigServerApplication|DiscoveryServerApplication|
 sleep 2
 
 echo "==> Starting infrastructure..."
-docker compose -f "$ROOT_DIR/docker-compose.yml" up -d postgres zookeeper kafka
+docker compose -f "$ROOT_DIR/docker-compose.yml" up -d postgres zookeeper kafka prometheus grafana
+wait_for_http "http://localhost:9090/-/ready" "prometheus" 60
+wait_for_http "http://localhost:3000/api/health" "grafana" 60
 
 start_service() {
   local name="$1"
