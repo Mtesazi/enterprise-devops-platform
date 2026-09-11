@@ -38,6 +38,13 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- range $secretEnv := $svc.secretEnv }}
+            - name: {{ $secretEnv.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default $.Values.secrets.name $secretEnv.secretKeyRef.name }}
+                  key: {{ $secretEnv.secretKeyRef.key }}
+            {{- end }}
           {{- if $svc.probes.enabled }}
           readinessProbe:
             httpGet:
