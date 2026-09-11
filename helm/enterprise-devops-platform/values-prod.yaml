@@ -1,0 +1,31 @@
+ingress:
+  host: platform.example.com
+  tls:
+    - secretName: platform-ingress-tls
+      hosts:
+        - platform.example.com
+
+platform:
+  services:
+    gateway-service:
+      replicaCount: 2
+    auth-service:
+      replicaCount: 2
+    employee-service:
+      replicaCount: 2
+    department-service:
+      replicaCount: 2
+    notification-service:
+      replicaCount: 2
+    audit-service:
+      replicaCount: 2
+
+postgresql:
+  enabled: false
+
+kafka:
+  enabled: false
+
+secrets:
+  create: false
+  name: platform-secrets

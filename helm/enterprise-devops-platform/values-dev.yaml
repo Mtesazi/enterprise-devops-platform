@@ -1,0 +1,24 @@
+ingress:
+  host: dev.platform.local
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "dev-postgres-password"
+    username: "platform"
+    password: "dev-platform-password"
+    database: "platform"
+  primary:
+    persistence:
+      enabled: false
+
+kafka:
+  enabled: true
+
+secrets:
+  jwt:
+    gateway: "dev-gateway-jwt-secret"
+    auth: "dev-auth-jwt-secret"
+  databases:
+    username: "platform"
+    password: "dev-platform-password"
