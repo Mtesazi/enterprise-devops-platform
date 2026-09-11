@@ -4,3 +4,12 @@ description: Helm chart for the enterprise-devops-platform microservices stack
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
+dependencies:
+  - name: postgresql
+    version: 18.11.1
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: kafka
+    version: 32.4.3
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled

@@ -15,6 +15,35 @@ ingress:
   pathType: Prefix
   tls: []
 
+secrets:
+  create: true
+  name: platform-secrets
+  jwt:
+    gateway: "change-me-in-production"
+    auth: "change-me-in-production"
+  databases:
+    username: "postgres"
+    password: "password"
+
+postgresql:
+  enabled: false
+  auth:
+    postgresPassword: "password"
+    username: "platform"
+    password: "password"
+    database: "platform"
+  primary:
+    persistence:
+      enabled: false
+
+kafka:
+  enabled: false
+  listeners:
+    client:
+      protocol: PLAINTEXT
+  externalAccess:
+    enabled: false
+
 platform:
   services:
     config-server:
@@ -73,13 +102,17 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         GATEWAY_AUTH_ENABLED: "true"
-        GATEWAY_JWT_SECRET: "change-me-in-production"
       probes:
         enabled: true
         path: /actuator/health
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: GATEWAY_JWT_SECRET
+          secretKeyRef:
+            name: platform-secrets
+            key: gateway-jwt-secret
 
     auth-service:
       enabled: true
@@ -96,15 +129,25 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
-        SECURITY_JWT_SECRET: "change-me-in-production"
       probes:
         enabled: true
         path: /actuator/health
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password
+        - name: SECURITY_JWT_SECRET
+          secretKeyRef:
+            name: platform-secrets
+            key: auth-jwt-secret
 
     employee-service:
       enabled: true
@@ -121,8 +164,6 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/employee_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
         KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
       probes:
         enabled: true
@@ -130,6 +171,15 @@ platform:
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password
 
     department-service:
       enabled: true
@@ -146,14 +196,21 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/department_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
       probes:
         enabled: true
         path: /actuator/health
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password
 
     notification-service:
       enabled: true
@@ -170,8 +227,6 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/notification_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
         KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
       probes:
         enabled: true
@@ -179,6 +234,15 @@ platform:
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password
 
     audit-service:
       enabled: true
@@ -195,8 +259,6 @@ platform:
         CONFIG_SERVER_URL: "http://config-server:8888"
         EUREKA_CLIENT_SERVICE_URL: "http://discovery-server:8761/eureka"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/audit_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
         KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
       probes:
         enabled: true
@@ -204,6 +266,15 @@ platform:
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password
 
     payroll-service:
       enabled: true
@@ -219,11 +290,18 @@ platform:
         SERVER_PORT: "8086"
         CONFIG_SERVER_URL: "http://config-server:8888"
         SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/payroll_db"
-        SPRING_DATASOURCE_USERNAME: "postgres"
-        SPRING_DATASOURCE_PASSWORD: "password"
       probes:
         enabled: true
         path: /actuator/health
         readinessInitialDelaySeconds: 20
         livenessInitialDelaySeconds: 40
       resources: {}
+      secretEnv:
+        - name: SPRING_DATASOURCE_USERNAME
+          secretKeyRef:
+            name: platform-secrets
+            key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          secretKeyRef:
+            name: platform-secrets
+            key: database-password

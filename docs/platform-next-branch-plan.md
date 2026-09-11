@@ -1,32 +1,34 @@
 # Next Branch Plan
 
+## Completed by `feature/kubernetes`
+
+- first platform Helm chart scaffold for all current services
+- dependency hooks for PostgreSQL and Kafka
+- Secret-backed sensitive runtime values
+- dev/prod values overlays and chart usage documentation
+
 ## Recommended next branch
 
-`feature/helm-bootstrap`
+`feature/gitops-bootstrap`
 
-## Exact scope for this branch
+## Exact scope for the next branch
 
-1. Finalize the first Helm chart skeleton for all current platform services.
-2. Add deployable dependencies as chart-managed or documented external prerequisites for PostgreSQL, Kafka, and ingress.
-3. Replace placeholder secrets and passwords in `values.yaml` with Kubernetes `Secret` references.
-4. Split service configuration into environment overlays such as `values-dev.yaml` and `values-prod.yaml`.
-5. Add chart templates for ConfigMap and Secret-driven runtime configuration where inline environment variables are no longer acceptable.
-6. Add optional persistence and bootstrap wiring for local cluster bring-up.
-7. Add a chart README with install, upgrade, and rollback commands.
-8. Add GitHub Actions packaging and `helm lint` enforcement for pull requests.
+1. Add Argo CD `Application` manifests for the platform chart and environment promotion flow.
+2. Define the GitOps repository layout for dev and prod values consumption.
+3. Add sync-wave ordering for prerequisites, platform services, and ingress.
+4. Add environment bootstrap manifests for namespaces, external secrets integration, and ingress prerequisites.
+5. Document the promotion path from Helm values to Argo CD-managed releases.
 
-## Branch sequence after `feature/helm-bootstrap`
+## Branch sequence after `feature/gitops-bootstrap`
 
-1. `feature/helm-dependencies` — introduce PostgreSQL, Kafka, and prerequisite wiring strategy.
-2. `feature/helm-secrets` — move credentials and JWT material into Kubernetes Secrets.
-3. `feature/helm-environments` — add dev/prod values files and environment-specific ingress and replica settings.
-4. `feature/gitops-bootstrap` — add Argo CD Application manifests or app-of-apps bootstrap structure.
-5. `feature/platform-observability-on-k8s` — wire Prometheus scraping, Grafana dashboards, and service monitor resources if the cluster supports them.
-6. `feature/aws-runtime-foundation` — connect the chart assumptions to Terraform-managed AWS runtime infrastructure.
+1. `feature/platform-observability-on-k8s` — wire Prometheus scraping, Grafana dashboards, and service monitor resources if the cluster supports them.
+2. `feature/aws-runtime-foundation` — connect the chart assumptions to Terraform-managed AWS runtime infrastructure.
+3. `feature/external-secrets-integration` — replace chart-managed secrets with cluster secret operators or cloud secret managers.
+4. `feature/redis-runtime` — add Redis runtime wiring where platform services start consuming it in Kubernetes.
 
-## Definition of done for `feature/helm-bootstrap`
+## Definition of done for `feature/gitops-bootstrap`
 
-- `helm/enterprise-devops-platform` renders every current service in the platform.
-- Gateway ingress is configurable and enabled by values.
-- Service ports and baseline environment variables match the current Spring configuration.
-- The branch leaves clear extension points for secrets, dependencies, and GitOps promotion instead of baking in production credentials.
+- Argo CD can reconcile the platform chart for at least one environment.
+- Values overlays are consumable without manual manifest editing.
+- Dependency ordering is explicit for namespace, secrets, dependencies, and services.
+- Promotion and rollback steps are documented for the GitOps flow.
