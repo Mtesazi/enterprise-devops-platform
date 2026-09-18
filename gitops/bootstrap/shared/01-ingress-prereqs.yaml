@@ -1,0 +1,30 @@
+# Reserves the ingress-nginx namespace and declares the IngressClass every
+# environment's platform chart Ingress (`ingress.className: nginx`) expects
+# to exist before its gateway Ingress is synced at wave "2".
+#
+# Both objects are cluster-scoped, so they are defined once here rather than
+# duplicated under `bootstrap/dev` and `bootstrap/prod` — duplicating them
+# per environment would make two Argo CD Applications compete for ownership
+# of the same cluster-scoped resources when dev and prod share a cluster.
+#
+# Installing the ingress-nginx controller itself is out of scope for this
+# branch; that happens as part of cluster/environment provisioning.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/part-of: enterprise-devops-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
+  labels:
+    app.kubernetes.io/part-of: enterprise-devops-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  controller: k8s.io/ingress-nginx

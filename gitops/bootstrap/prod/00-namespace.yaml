@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enterprise-platform-prod
+  labels:
+    app.kubernetes.io/part-of: enterprise-devops-platform
+    environment: prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"

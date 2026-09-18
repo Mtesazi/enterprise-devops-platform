@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: enterprise-devops-platform
+  namespace: argocd
+spec:
+  description: >-
+    Enterprise DevOps Platform microservices stack, deployed via the
+    enterprise-devops-platform Helm chart and reconciled by Argo CD.
+  sourceRepos:
+    - https://github.com/Mtesazi/enterprise-devops-platform.git
+  destinations:
+    - namespace: enterprise-platform-dev
+      server: https://kubernetes.default.svc
+    - namespace: enterprise-platform-prod
+      server: https://kubernetes.default.svc
+    - namespace: ingress-nginx
+      server: https://kubernetes.default.svc
+    - namespace: external-secrets
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: IngressClass
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
