@@ -27,6 +27,8 @@ secrets:
 
 postgresql:
   enabled: false
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "0"
   auth:
     postgresPassword: "password"
     username: "platform"
@@ -38,6 +40,8 @@ postgresql:
 
 kafka:
   enabled: false
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "0"
   listeners:
     client:
       protocol: PLAINTEXT

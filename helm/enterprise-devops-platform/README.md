@@ -24,8 +24,12 @@ Initial platform chart structure for the current microservice stack, with depend
 ## Still expected next
 
 - Redis
-- Argo CD resources
 - service-specific ConfigMaps and Secret externalization strategy
+
+Argo CD GitOps resources (AppProject, app-of-apps, per-environment
+Applications, and environment bootstrap manifests) now live under
+`gitops/`. See `gitops/README.md` for the repository layout, sync-wave
+ordering, and the promotion/rollback path.
 
 ## Dependency model
 

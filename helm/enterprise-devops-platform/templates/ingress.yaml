@@ -6,8 +6,9 @@ metadata:
   namespace: {{ include "enterprise-devops-platform.namespace" . }}
   labels:
     {{- include "enterprise-devops-platform.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
