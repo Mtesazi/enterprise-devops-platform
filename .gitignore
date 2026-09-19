@@ -26,6 +26,12 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfvars
+!*.tfvars.example
+backend.hcl
+!backend.hcl.example
+crash.log
+crash.*.log
 
 # Kubernetes
 kubeconfig

@@ -26,7 +26,26 @@
 
 ## Recommended next branch
 
-`feature/aws-runtime-foundation`
+`feature/external-secrets-integration`
+
+## Completed by `feature/aws-runtime-foundation`
+
+- Terraform modules (`infrastructure/terraform/modules/`): `vpc`, `eks`,
+  `rds-postgres` (one database per microservice, matching
+  `docker/postgres/init/01-create-databases.sql`), and `msk-kafka`.
+- Per-environment root modules (`infrastructure/terraform/environments/{dev,prod}`)
+  with separate state (S3 backend, configured via `backend.hcl`,
+  not committed) and environment-appropriate sizing (dev: single NAT
+  gateway, SPOT nodes, single-AZ RDS; prod: NAT per AZ, on-demand nodes,
+  Multi-AZ RDS, deletion protection).
+- EKS OIDC provider provisioned and exposed as an output, ready for IRSA
+  trust policies (needed by `feature/external-secrets-integration`).
+- `infrastructure/terraform/README.md` documents the Terraform vs.
+  Helm/Argo CD split of responsibility and how outputs feed into
+  `values-prod.yaml`'s external-infrastructure path
+  (`postgresql.enabled=false` / `kafka.enabled=false`).
+- Validated with `terraform fmt`, `terraform init`, and `terraform validate`
+  for both environments.
 
 ## Completed by `feature/platform-observability-on-k8s`
 
@@ -42,21 +61,29 @@
 - Sync-wave model extended: observability resources join platform services
   at wave `1` (documented in `gitops/README.md`).
 
-## Exact scope for the next branch (`feature/aws-runtime-foundation`)
+## Exact scope for the next branch (`feature/external-secrets-integration`)
 
-1. Connect the chart's runtime assumptions (Postgres, Kafka, ingress) to
-   Terraform-managed AWS infrastructure (e.g. RDS, MSK, ALB/Route53) for
-   environments that disable the bundled `postgresql`/`kafka` subcharts.
-2. Document the split of responsibility between Terraform (cloud
-   infrastructure) and Helm/Argo CD (in-cluster workloads).
-3. Wire environment-specific connection details (endpoints, credentials)
-   into the existing Secret/values-overlay model without breaking the
-   dev path (bundled subcharts still enabled for local/dev clusters).
+1. Install the External Secrets Operator into the cluster (via
+   `gitops/bootstrap/shared`'s reserved `external-secrets` namespace).
+2. Grant the operator's service account access to AWS Secrets
+   Manager/SSM Parameter Store via IRSA, using the EKS OIDC provider
+   output (`eks_oidc_provider_arn`) from `feature/aws-runtime-foundation`.
+3. Replace the chart-managed `platform-secrets` Secret in prod with an
+   `ExternalSecret` resource sourcing the same keys, keeping the dev path
+   (`secrets.create=true`) unchanged.
 
-## Branch sequence after `feature/aws-runtime-foundation`
+## Branch sequence after `feature/external-secrets-integration`
 
-1. `feature/external-secrets-integration` — replace chart-managed secrets with cluster secret operators or cloud secret managers, using the `external-secrets` namespace reserved in `gitops/bootstrap/shared`.
-2. `feature/redis-runtime` — add Redis runtime wiring where platform services start consuming it in Kubernetes, following the same `commonAnnotations` sync-wave pattern used for PostgreSQL/Kafka.
+1. `feature/redis-runtime` — add Redis runtime wiring where platform services start consuming it in Kubernetes, following the same `commonAnnotations` sync-wave pattern used for PostgreSQL/Kafka.
+
+## Definition of done for `feature/aws-runtime-foundation`
+
+- [x] VPC, EKS, RDS, and MSK are each defined as reusable Terraform modules.
+- [x] Dev and prod environments have independent state and appropriately
+      different sizing/HA defaults.
+- [x] `terraform validate` passes for both environments.
+- [x] The Terraform/Helm/Argo CD split of responsibility, and how Terraform
+      outputs feed `values-prod.yaml`, is documented.
 
 ## Definition of done for `feature/platform-observability-on-k8s`
 
