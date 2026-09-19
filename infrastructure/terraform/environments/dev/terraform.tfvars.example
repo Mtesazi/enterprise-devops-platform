@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values, or export
+# TF_VAR_rds_master_password instead of writing the secret to disk.
+
+rds_master_password = "REPLACE_ME"
