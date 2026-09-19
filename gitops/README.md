@@ -55,7 +55,10 @@ levels:
 `commonAnnotations` on the Bitnami dependencies):
 1. Wave `0` — `platform-secrets` Secret, and the `postgresql`/`kafka`
    dependency subcharts.
-2. Wave `1` — platform service `Deployment`/`Service` resources.
+2. Wave `1` — platform service `Deployment`/`Service` resources, and (when
+   `monitoring.*.enabled`) the `ServiceMonitor`/`PrometheusRule` resources and
+   Grafana dashboard `ConfigMap`, since they only describe existing services
+   and have no strict ordering requirement relative to them.
 3. Wave `2` — the gateway `Ingress`.
 
 This guarantees namespaces and shared cluster prerequisites exist before the
@@ -110,7 +113,6 @@ automatically.
 
 ## Still expected in later branches
 
-- `feature/platform-observability-on-k8s` — Prometheus/Grafana wiring.
 - `feature/aws-runtime-foundation` — Terraform-managed AWS runtime.
 - `feature/external-secrets-integration` — install the External Secrets
   Operator and replace `platform-secrets` with operator-managed secrets in

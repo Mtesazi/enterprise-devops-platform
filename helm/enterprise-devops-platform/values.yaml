@@ -25,6 +25,31 @@ secrets:
     username: "postgres"
     password: "password"
 
+monitoring:
+  # All observability resources are no-ops unless explicitly enabled, so clusters
+  # without the Prometheus Operator (ServiceMonitor/PrometheusRule CRDs) or a
+  # Grafana dashboard sidecar are unaffected by default.
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    path: /actuator/prometheus
+    # Labels the Prometheus Operator's own ServiceMonitor selector looks for,
+    # e.g. `release: kube-prometheus-stack`. Left empty by default.
+    labels: {}
+  prometheusRule:
+    enabled: false
+    labels: {}
+    # Thresholds used by the bundled alert rules; tune per environment.
+    errorRateThreshold: "0.05"
+    latencyP95ThresholdSeconds: "1"
+    jvmHeapUsageThreshold: "0.85"
+  grafanaDashboards:
+    enabled: false
+    # Label most kube-prometheus-stack / Grafana sidecars watch for to auto-load
+    # dashboard ConfigMaps.
+    labels:
+      grafana_dashboard: "1"
+
 postgresql:
   enabled: false
   commonAnnotations:
