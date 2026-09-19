@@ -26,22 +26,44 @@
 
 ## Recommended next branch
 
-`feature/platform-observability-on-k8s`
+`feature/aws-runtime-foundation`
 
-## Exact scope for the next branch
+## Completed by `feature/platform-observability-on-k8s`
 
-1. Wire Prometheus scraping, Grafana dashboards, and `ServiceMonitor`/`PodMonitor`
-   resources for the platform services, gated behind a chart value so clusters
-   without the Prometheus Operator installed are unaffected.
-2. Add dashboards/alerts specific to the employee-management domain (service
-   health, JVM metrics, HTTP latency/error rate per service).
-3. Document how observability resources fit into the existing sync-wave model.
+- Per-service `ServiceMonitor` resources scraping `/actuator/prometheus`
+  (already exposed by every service via Micrometer + `platform-starter`).
+- A `PrometheusRule` with alerts for service downtime, elevated HTTP 5xx
+  rate, high p95 latency, and high JVM heap usage.
+- A Grafana dashboard (service up/down, request rate, error rate, p95
+  latency, JVM heap, CPU) loaded via a sidecar-discoverable `ConfigMap`.
+- All of the above gated behind `monitoring.*.enabled` chart values (default
+  `false`) plus a `.Capabilities.APIVersions` CRD check, so clusters without
+  the Prometheus Operator installed are unaffected.
+- Sync-wave model extended: observability resources join platform services
+  at wave `1` (documented in `gitops/README.md`).
 
-## Branch sequence after `feature/platform-observability-on-k8s`
+## Exact scope for the next branch (`feature/aws-runtime-foundation`)
 
-1. `feature/aws-runtime-foundation` — connect the chart assumptions to Terraform-managed AWS runtime infrastructure.
-2. `feature/external-secrets-integration` — replace chart-managed secrets with cluster secret operators or cloud secret managers, using the `external-secrets` namespace reserved in `gitops/bootstrap/shared`.
-3. `feature/redis-runtime` — add Redis runtime wiring where platform services start consuming it in Kubernetes, following the same `commonAnnotations` sync-wave pattern used for PostgreSQL/Kafka.
+1. Connect the chart's runtime assumptions (Postgres, Kafka, ingress) to
+   Terraform-managed AWS infrastructure (e.g. RDS, MSK, ALB/Route53) for
+   environments that disable the bundled `postgresql`/`kafka` subcharts.
+2. Document the split of responsibility between Terraform (cloud
+   infrastructure) and Helm/Argo CD (in-cluster workloads).
+3. Wire environment-specific connection details (endpoints, credentials)
+   into the existing Secret/values-overlay model without breaking the
+   dev path (bundled subcharts still enabled for local/dev clusters).
+
+## Branch sequence after `feature/aws-runtime-foundation`
+
+1. `feature/external-secrets-integration` — replace chart-managed secrets with cluster secret operators or cloud secret managers, using the `external-secrets` namespace reserved in `gitops/bootstrap/shared`.
+2. `feature/redis-runtime` — add Redis runtime wiring where platform services start consuming it in Kubernetes, following the same `commonAnnotations` sync-wave pattern used for PostgreSQL/Kafka.
+
+## Definition of done for `feature/platform-observability-on-k8s`
+
+- [x] ServiceMonitors scrape every enabled platform service's Prometheus endpoint.
+- [x] Alert rules cover service availability, error rate, latency, and JVM heap.
+- [x] A starter Grafana dashboard is shipped and auto-loadable via ConfigMap.
+- [x] Enabling monitoring is a single set of chart values; disabling (default) has zero effect on clusters without the Prometheus Operator.
 
 ## Definition of done for `feature/gitops-bootstrap`
 

@@ -1,0 +1,32 @@
+{{- if and .Values.monitoring.serviceMonitor.enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+{{- range $name, $svc := .Values.platform.services }}
+{{- if $svc.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "enterprise-devops-platform.namespace" $ }}
+  labels:
+    {{- include "enterprise-devops-platform.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+    {{- with $.Values.monitoring.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  selector:
+    matchLabels:
+      {{- include "enterprise-devops-platform.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+  namespaceSelector:
+    matchNames:
+      - {{ include "enterprise-devops-platform.namespace" $ }}
+  endpoints:
+    - port: http
+      path: {{ $.Values.monitoring.serviceMonitor.path }}
+      interval: {{ $.Values.monitoring.serviceMonitor.interval }}
+{{- end }}
+{{- end }}
+{{- end }}

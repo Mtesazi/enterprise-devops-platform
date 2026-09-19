@@ -1,0 +1,75 @@
+{{- if and .Values.monitoring.prometheusRule.enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "enterprise-devops-platform.fullname" . }}-alerts
+  namespace: {{ include "enterprise-devops-platform.namespace" . }}
+  labels:
+    {{- include "enterprise-devops-platform.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  groups:
+    - name: enterprise-devops-platform.rules
+      rules:
+        - alert: PlatformServiceDown
+          expr: |
+            up{namespace="{{ include "enterprise-devops-platform.namespace" . }}"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{`{{ $labels.service }}`}} is down"
+            description: >-
+              {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}
+              has been unreachable by Prometheus for more than 5 minutes.
+
+        - alert: PlatformServiceHighErrorRate
+          expr: |
+            (
+              sum by (service) (rate(http_server_requests_seconds_count{namespace="{{ include "enterprise-devops-platform.namespace" . }}", outcome="SERVER_ERROR"}[5m]))
+              /
+              sum by (service) (rate(http_server_requests_seconds_count{namespace="{{ include "enterprise-devops-platform.namespace" . }}"}[5m]))
+            ) > {{ .Values.monitoring.prometheusRule.errorRateThreshold }}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High HTTP 5xx rate on {{`{{ $labels.service }}`}}"
+            description: >-
+              {{`{{ $labels.service }}`}} has a 5xx error ratio above
+              {{ .Values.monitoring.prometheusRule.errorRateThreshold }} over the last 5 minutes.
+
+        - alert: PlatformServiceHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum by (service, le) (rate(http_server_requests_seconds_bucket{namespace="{{ include "enterprise-devops-platform.namespace" . }}"}[5m]))
+            ) > {{ .Values.monitoring.prometheusRule.latencyP95ThresholdSeconds }}
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High p95 latency on {{`{{ $labels.service }}`}}"
+            description: >-
+              {{`{{ $labels.service }}`}} p95 HTTP request latency has exceeded
+              {{ .Values.monitoring.prometheusRule.latencyP95ThresholdSeconds }}s for 10 minutes.
+
+        - alert: PlatformServiceHighJvmHeapUsage
+          expr: |
+            (
+              sum by (service) (jvm_memory_used_bytes{namespace="{{ include "enterprise-devops-platform.namespace" . }}", area="heap"})
+              /
+              sum by (service) (jvm_memory_max_bytes{namespace="{{ include "enterprise-devops-platform.namespace" . }}", area="heap"})
+            ) > {{ .Values.monitoring.prometheusRule.jvmHeapUsageThreshold }}
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High JVM heap usage on {{`{{ $labels.service }}`}}"
+            description: >-
+              {{`{{ $labels.service }}`}} heap usage has exceeded
+              {{ .Values.monitoring.prometheusRule.jvmHeapUsageThreshold }} of its configured max for 10 minutes.
+{{- end }}
